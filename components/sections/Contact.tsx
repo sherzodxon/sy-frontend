@@ -61,7 +61,7 @@ export default function Contact() {
                   <div>
                     <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{s.name}</div>
                     <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono,monospace" }}>
-                      @sherzodxon
+                    
                     </div>
                   </div>
                 </a>

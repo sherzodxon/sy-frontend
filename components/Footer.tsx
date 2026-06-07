@@ -15,16 +15,16 @@ export default function Footer() {
     <footer style={{ borderTop:"1px solid var(--border)", background:"var(--bg-secondary)", padding:"32px 20px" }}>
       <div style={{ maxWidth:1220,margin:"0 auto",display:"flex",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:16 }}>
         <div>
-          <p style={{ fontWeight:800,fontSize:"1rem",color:"var(--text)",marginBottom:4 }}>
-            <span style={{ color:"var(--accent)" }}>S</span>Y
-            <span style={{ fontFamily:"JetBrains Mono,monospace",fontSize:"0.6rem",color:"var(--text-muted)",marginLeft:4 }}>.uz</span>
-          </p>
+           <a href="#home" style={{ fontWeight:800,fontSize:"1.1rem",color:"var(--text)",textDecoration:"none",letterSpacing:"-0.03em",display:"flex" ,alignItems:"center",marginBottom:"12px"}}>
+          <img style={{marginRight:"10px"}} src="img/apple-touch-icon.png" width={32} height={32} alt="logo" />
+          <span style={{ color:"var(--accent)" }}>S</span>herzodxon
+        </a>
           <p style={{ fontSize:"0.78rem",color:"var(--text-muted)" }}>
             © {new Date().getFullYear()} Sherzodxon Yarmatxonov · {t.footer.rights}
           </p>
-          <p style={{ fontSize:"0.7rem",color:"var(--text-muted)",fontFamily:"JetBrains Mono,monospace",marginTop:2,display:"flex",alignItems:"center",gap:4 }}>
+          {/* <p style={{ fontSize:"0.7rem",color:"var(--text-muted)",fontFamily:"JetBrains Mono,monospace",marginTop:2,display:"flex",alignItems:"center",gap:4 }}>
             {t.footer.built}
-          </p>
+          </p> */}
         </div>
         <div style={{ display:"flex",gap:10 }}>
           {socials.map(s=>(

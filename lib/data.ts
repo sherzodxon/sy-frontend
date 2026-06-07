@@ -104,11 +104,11 @@ export const skills = [
 
 export const socials = [
   { name: "GitHub", url: "https://github.com/sherzodxon", icon: "Github" },
-  { name: "Telegram", url: "https://t.me/sherzodxon", icon: "Send" },
+  { name: "Telegram", url: "https://t.me/sh_yarmatxonov", icon: "Send" },
   {
     name: "LinkedIn",
     url: "https://linkedin.com/in/sherzodxon",
     icon: "Linkedin",
   },
-  { name: "Email", url: "mailto:hello@sherzodxon.uz", icon: "Mail" },
+  { name: "Email", url: "mailto:hello@yarmatxonovsherzodxon@gmail.com", icon: "Mail" },
 ];

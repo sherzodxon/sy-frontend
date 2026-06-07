@@ -8,21 +8,21 @@ import Counter from "@/components/ui/Counter";
 const socialsTranslations = {
   en: [
     { icon: <GitFork size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
-    { icon: <Send size={18}/>, href: "https://t.me/sherzodxon", label: "Telegram" },
+    { icon: <Send size={18}/>, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
     { icon: <Link2 size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
-    { icon: <Mail size={18}/>, href: "mailto:hello@sherzodxon.uz", label: "Email" },
+    { icon: <Mail size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
   ],
   uz: [
     { icon: <GitFork size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
-    { icon: <Send size={18}/>, href: "https://t.me/sherzodxon", label: "Telegram" },
+    { icon: <Send size={18}/>, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
     { icon: <Link2 size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
-    { icon: <Mail size={18}/>, href: "mailto:hello@sherzodxon.uz", label: "Email" },
+    { icon: <Mail size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
   ],
   ru: [
     { icon: <GitFork size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
-    { icon: <Send size={18}/>, href: "https://t.me/sherzodxon", label: "Telegram" },
+    { icon: <Send size={18}/>, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
     { icon: <Link2 size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
-    { icon: <Mail size={18}/>, href: "mailto:hello@sherzodxon.uz", label: "Email" },
+    { icon: <Mail size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
   ],
 };
 

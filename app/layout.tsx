@@ -4,10 +4,18 @@ import { ThemeProvider } from "next-themes";
 import { LangProvider } from "@/hooks/useLang";
 import { AuthProvider } from "@/hooks/useAuth";
 
-export const metadata: Metadata = {
-  title: "Sherzodxon Yarmatxonov — Full-Stack Developer",
-  description:
-    "Full-Stack Developer crafting modern web & mobile applications with Next.js, React Native, Node.js, and PostgreSQL.",
+export const metadata = {
+  title: "Sherzodxon",
+  description: "ShY Application",
+
+  icons: {
+    icon: [
+      { url: "/img/favicon.ico" },
+      { url: "/img/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/img/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/img/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

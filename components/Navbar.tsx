@@ -61,9 +61,9 @@ export default function Navbar() {
   return (
     <header style={hdr}>
       <div style={{ maxWidth:1220,margin:"0 auto",padding:"0 20px",height:64,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-        <a href="#home" style={{ fontWeight:800,fontSize:"1.1rem",color:"var(--text)",textDecoration:"none",letterSpacing:"-0.03em" }}>
-          <span style={{ color:"var(--accent)" }}>S</span>Y
-          <span style={{ fontFamily:"JetBrains Mono,monospace",fontSize:"0.6rem",color:"var(--text-muted)",marginLeft:4 }}>.</span>
+        <a href="#home" style={{ fontWeight:800,fontSize:"1.1rem",color:"var(--text)",textDecoration:"none",letterSpacing:"-0.03em",display:"flex" ,alignItems:"center"}}>
+          <img style={{marginRight:"10px"}} src="img/apple-touch-icon.png" width={32} height={32} alt="logo" />
+          <span style={{ color:"var(--accent)" }}>S</span>herzodxon
         </a>
 
         <nav className="nav-desktop">
