@@ -100,6 +100,8 @@ export const skills = [
   "Prisma",
   "Express",
   "TailwindCSS",
+  "SCSS",
+  "BEM"
 ];
 
 export const socials = [
