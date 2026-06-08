@@ -393,7 +393,7 @@ export default function ChatPage() {
         @keyframes chatBounce { 0%,100%{transform:translateY(0);opacity:0.4} 50%{transform:translateY(-5px);opacity:1} }
       `}</style>
 
-      {showAuth && <AuthModal />}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
   );
 }
