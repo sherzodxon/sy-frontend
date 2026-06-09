@@ -15,7 +15,7 @@ export const projectsTranslations = {
       description: "Three-stage school olympiad platform covering typing tests, quizzes, and document submissions. Built with strict anti-cheat measures and real-time scoring.",
       tech: ["Next.js", "Express", "PostgreSQL", "Prisma", "TypeScript"],
       status: "Active",
-      link: null,
+      link: "https://edexexam.uz",
     },
     {
       id: 2,
@@ -23,7 +23,7 @@ export const projectsTranslations = {
       description: "Monkeytype-style typing test platform with admin results management, live WPM tracking, and anti-cheat measures. Deployed on Vercel + Render.",
       tech: ["Next.js 14", "Express", "PostgreSQL", "TailwindCSS"],
       status: "Active",
-      link: null,
+      link: "https://edexexam.uz",
     },
     {
       id: 3,
@@ -33,14 +33,7 @@ export const projectsTranslations = {
       status: "Active",
       link: "https://test.edexschool.uz",
     },
-    {
-      id: 4,
-      title: "Hogwarts Ball Tizimi",
-      description: "Harry Potter-themed house scoring platform. Migrated Node.js/SQLite backend to PostgreSQL with Prisma, added house/event models and coordinator role.",
-      tech: ["Next.js", "Node.js", "PostgreSQL", "Prisma", "TypeScript"],
-      status: "Completed",
-      link: null,
-    },
+   
     {
       id: 5,
       title: "EdEx Teacher App",
@@ -51,12 +44,21 @@ export const projectsTranslations = {
     },
     {
       id: 6,
-      title: "Location Tracker Admin Panel",
-      description: "Full admin dashboard with geolocation features, dark-themed UI, database migration from SQLite to PostgreSQL, deployed on Render.",
-      tech: ["Node.js", "PostgreSQL", "Express", "Leaflet.js"],
+      title: "Hamroh Muslim app",
+      description: "You can get prayer times in any region, translation and audio of Quran surahs, 99 names of Allah, one month prayer calendar and many other necessary information.",
+      tech: ["React", "SCSS", "Redux", "React Query"],
       status: "Completed",
-      link: null,
+      link: "https://hamroh.com.uz",
     },
+    {
+      id: 7,
+      title: "Currency Rates",
+      description: "Yhis website you can know the current and historical value of all currency rates of the world.",
+      tech: ["React", "SCSS", "Redux", "React Query"],
+      status: "Completed",
+      link: "https://kursonline.uz",
+    },
+    
   ],
   uz: [
     {
@@ -65,7 +67,7 @@ export const projectsTranslations = {
       description: "Matn terish testlari, viktorinalar va hujjat topshirishni o'z ichiga olgan uch bosqichli maktab olimpiadasi platformasi. Qattiq antichiqish choralari va real vaqtda ball hisoblash bilan qurilgan.",
       tech: ["Next.js", "Express", "PostgreSQL", "Prisma", "TypeScript"],
       status: "Faol",
-      link: null,
+      link: "https://edex-exam.uz",
     },
     {
       id: 2,
@@ -73,7 +75,7 @@ export const projectsTranslations = {
       description: "Monkeytype uslubidagi matn terish test platformasi, admin natijalarni boshqarish, jonli WPM kuzatuvi va antichiqish choralari bilan. Vercel + Renderda joylashtirilgan.",
       tech: ["Next.js 14", "Express", "PostgreSQL", "TailwindCSS"],
       status: "Faol",
-      link: null,
+      link: "https://edex-exam.uz",
     },
     {
       id: 3,
@@ -82,14 +84,6 @@ export const projectsTranslations = {
       tech: ["Next.js", "React Native", "PWA", "JWT"],
       status: "Faol",
       link: "https://test.edexschool.uz",
-    },
-    {
-      id: 4,
-      title: "Xogvarts Ball Tizimi",
-      description: "Harry Potter mavzusidagi uylar ball platformasi. Node.js/SQLite backendni PostgreSQL va Prisma-ga o'tkazish, uy/event modellari va koordinator roli qo'shilgan.",
-      tech: ["Next.js", "Node.js", "PostgreSQL", "Prisma", "TypeScript"],
-      status: "Tugallangan",
-      link: null,
     },
     {
       id: 5,
@@ -101,12 +95,21 @@ export const projectsTranslations = {
     },
     {
       id: 6,
-      title: "Lokatsiya Kuzatuv Admin Paneli",
-      description: "Geolokatsiya funksiyalariga ega to'liq admin panel, qorong'u mavzuli UI, SQLite dan PostgreSQL ga ma'lumotlar bazasi migratsiyasi, Renderda joylashtirilgan.",
-      tech: ["Node.js", "PostgreSQL", "Express", "Leaflet.js"],
-      status: "Tugallangan",
-      link: null,
+      title: "Hamroh Muslim app",
+      description: "Siz istalgan mintaqada namoz vaqtlarini, Qur'on suralarining tarjimasi va audiosini, Allohning 99 ismini, bir oylik namoz taqvimini va boshqa ko'plab kerakli ma'lumotlarni olishingiz mumkin.",
+      tech: ["React", "SCSS", "Redux", "React Query"],
+      status: "Faol",
+      link: "https://hamroh.com.uz",
     },
+    {
+      id: 7,
+      title: "Currency Rates",
+      description: "Ushbu veb-saytda siz dunyoning barcha valyuta kurslarining joriy va tarixiy qiymatini bilib olishingiz mumkin.",
+      tech: ["React", "SCSS", "Redux", "React Query"],
+      status: "Faol",
+      link: "https://kursonline.uz",
+    },
+    
   ],
   ru: [
     {
@@ -115,7 +118,7 @@ export const projectsTranslations = {
       description: "Трёхуровневая платформа для школьных олимпиад, включающая тесты на печать, викторины и загрузку документов. Строгие меры защиты от списывания и подсчёт очков в реальном времени.",
       tech: ["Next.js", "Express", "PostgreSQL", "Prisma", "TypeScript"],
       status: "Активный",
-      link: null,
+      link: "https://edex-exam.uz",
     },
     {
       id: 2,
@@ -123,7 +126,7 @@ export const projectsTranslations = {
       description: "Платформа для тестирования печати в стиле Monkeytype с управлением результатами администратора, отслеживанием WPM в реальном времени и защитой от списывания. Размещено на Vercel + Render.",
       tech: ["Next.js 14", "Express", "PostgreSQL", "TailwindCSS"],
       status: "Активный",
-      link: null,
+       link: "https://edex-exam.uz",
     },
     {
       id: 3,
@@ -133,14 +136,7 @@ export const projectsTranslations = {
       status: "Активный",
       link: "https://test.edexschool.uz",
     },
-    {
-      id: 4,
-      title: "Система Баллов Хогвартс",
-      description: "Платформа подсчёта очков факультетов в тематике Гарри Поттера. Миграция бэкенда Node.js/SQLite на PostgreSQL с Prisma, добавлены модели факультетов/событий и роль координатора.",
-      tech: ["Next.js", "Node.js", "PostgreSQL", "Prisma", "TypeScript"],
-      status: "Завершён",
-      link: null,
-    },
+    
     {
       id: 5,
       title: "Приложение Учителя EdEx",
@@ -151,12 +147,21 @@ export const projectsTranslations = {
     },
     {
       id: 6,
-      title: "Панель Администратора Отслеживания Местоположения",
-      description: "Полная панель администратора с функциями геолокации, тёмным UI, миграцией базы данных с SQLite на PostgreSQL, размещено на Render.",
-      tech: ["Node.js", "PostgreSQL", "Express", "Leaflet.js"],
-      status: "Завершён",
-      link: null,
+      title: "Hamroh Muslim app",
+      description: "Здесь вы найдете расписание молитв для любого региона, перевод и аудиозаписи сур Корана, 99 имен Аллаха, календарь молитв на месяц и много другой необходимой информации.",
+      tech: ["React", "SCSS", "Redux", "React Query"],
+      status: "Активный",
+      link: "https://hamroh.com.uz",
     },
+     {
+      id: 7,
+      title: "Currency Rates",
+      description: "На этом сайте вы можете узнать текущие и исторические курсы всех мировых валют.",
+      tech: ["React", "SCSS", "Redux", "React Query"],
+      status: "Активный",
+      link: "https://kursonline.uz",
+    },
+   
   ],
 };
 
@@ -416,7 +421,7 @@ export const translations = {
       greeting: "Salom, men",
       name: "Sherzodxon Yarmatxonov",
       tagline: "Bu men haqimdagi sayt",
-      description: "Zamonaviy veb va mobil ilovalar yaratuvchi Full-Stack dasturchi. Toza arxitektura, ajoyib UX va kengaytiriladigan tizimlar haqida qiziqaman.",
+      description: "Zamonaviy veb va mobil ilovalar yaratuvchi Full-Stack dasturchi. Toza arxitektura, ajoyib UX va kengaytiriladigan tizimlar mutaxassisi",
       cta_projects: "Loyihalarni Ko'rish",
       cta_resume: "Rezyume Yuklab Olish",
       stats_exp: "Yil tajriba",
@@ -445,7 +450,7 @@ export const translations = {
     },
     contact: {
       title: "Aloqa",
-      subtitle: "Bog'lanaylik",
+      subtitle: "Bog'lanish",
       chat: "Chatni Ochish",
       social_hint: "Istalgan platforma orqali murojaat qiling",
     },

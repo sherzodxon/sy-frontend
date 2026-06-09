@@ -29,10 +29,10 @@ const socialsTranslations = {
 export default function Hero() {
   const { t, locale } = useLang();
   const words = locale === "uz" 
-    ? ["Full-Stack Dasturchi", "Next.js Mutaxassisi", "React Native Dasturchi", "PostgreSQL Arhitektori", "UI/UX Ishqibozi"]
+    ? ["Full-Stack Dasturchi", "Next.js Mutaxassisi", "React Native Dasturchi", "Expo", "PostgreSQL Arxitektori", "Kiberxavfsizlik mutaxassisi"]
     : locale === "ru"
-    ? ["Full-Stack Разработчик", "Эксперт Next.js", "React Native Разработчик", "Архитектор PostgreSQL", "Энтузиаст UI/UX"]
-    : ["Full-Stack Developer", "Next.js Expert", "React Native Dev", "PostgreSQL Architect", "UI/UX Enthusiast"];
+    ? ["Full-Stack Разработчик", "Эксперт Next.js", "React Native Разработчик", "Expo", "Архитектор PostgreSQL","Специалист по кибербезопасности"]
+    : ["Full-Stack Developer", "Next.js Expert", "React Native Dev", "PostgreSQL Architect","Expo","Cybersecurity Specialist"];
   
   const skills = skillsTranslations[locale as keyof typeof skillsTranslations] || skillsTranslations.en;
   const socials = socialsTranslations[locale as keyof typeof socialsTranslations] || socialsTranslations.en;
