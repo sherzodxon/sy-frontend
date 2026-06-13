@@ -431,7 +431,7 @@ input {
     max-width: 100% !important;
     border-right: none !important;
     border-bottom: 1px solid var(--border) !important;
-    max-height: 45vh;
+    
     overflow-y: auto;
   }
   .admin-chat {
@@ -540,7 +540,7 @@ img, video, canvas, svg {
   }
   .admin-sidebar {
     height: auto !important;
-    max-height: 50vh;
+    
     overflow-y: auto;
   }
   .admin-chat {

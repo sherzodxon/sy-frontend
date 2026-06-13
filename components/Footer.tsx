@@ -4,9 +4,9 @@ import { useLang } from "@/hooks/useLang";
 
 const socials = [
   { name:"GitHub",   href:"https://github.com/sherzodxon",      icon:<GitFork size={16}/> },
-  { name:"Telegram", href:"https://t.me/sherzodxon",            icon:<Send size={16}/> },
+  { name:"Telegram", href:"https://t.me/sh_yarmatxonov",            icon:<Send size={16}/> },
   { name:"LinkedIn", href:"https://linkedin.com/in/sherzodxon", icon:<Link2 size={16}/> },
-  { name:"Email",    href:"mailto:hello@sherzodxon.uz",         icon:<Mail size={16}/> },
+  { name:"Email",    href:"mailto:yarmatxonovsherzodxon@gmail.com",         icon:<Mail size={16}/> },
 ];
 
 export default function Footer() {
