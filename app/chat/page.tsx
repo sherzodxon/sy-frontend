@@ -13,16 +13,17 @@ import {
 import Link from "next/link";
 import AuthModal from "@/components/chat/AuthModal";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 type ConvItem =
   | (UserMessage & { kind: "user-msg" })
   | (AdminDirectMessage & { kind: "admin-direct" });
 
-function buildTimeline(
-  msgs: UserMessage[],
-  adminMsgs: AdminDirectMessage[]
-): ConvItem[] {
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function buildTimeline(userMsgs: UserMessage[], adminMsgs: AdminDirectMessage[]): ConvItem[] {
   const all: ConvItem[] = [
-    ...msgs.map(m => ({ ...m, kind: "user-msg" as const })),
+    ...userMsgs.map(m => ({ ...m, kind: "user-msg" as const })),
     ...adminMsgs.map(m => ({ ...m, kind: "admin-direct" as const })),
   ];
   return all.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -32,11 +33,22 @@ function fmt(d: string) {
   return new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString([], { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function isSameDay(a: string, b: string) {
+  return new Date(a).toDateString() === new Date(b).toDateString();
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function ChatPage() {
   const { user, logout, loading } = useAuth();
   const { t, locale, setLocale } = useLang();
   const { theme, setTheme } = useTheme();
-  const [msgs, setMsgs] = useState<UserMessage[]>([]);
+
+  const [userMsgs, setUserMsgs] = useState<UserMessage[]>([]);
   const [adminMsgs, setAdminMsgs] = useState<AdminDirectMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -46,21 +58,27 @@ export default function ChatPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // ── Data fetching ──────────────────────────────────────────────────────────
 
   const loadMessages = useCallback(async () => {
     if (!user) return;
     try {
       const data = await chatApi.getMessages();
-      setMsgs(data.messages);
+      setUserMsgs(data.messages);
       setAdminMsgs(data.adminMessages);
     } catch { /* silent */ }
   }, [user]);
 
   useEffect(() => {
-    if (user) { setFetching(true); loadMessages().finally(() => setFetching(false)); }
+    if (user) {
+      setFetching(true);
+      loadMessages().finally(() => setFetching(false));
+    }
   }, [user, loadMessages]);
 
   useEffect(() => {
@@ -71,18 +89,13 @@ export default function ChatPage() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [msgs, adminMsgs]);
+  }, [userMsgs, adminMsgs]);
+
+  // ── Actions ────────────────────────────────────────────────────────────────
 
   const cycleTheme = () => {
     const order = ["light", "dark", "system"];
     setTheme(order[(order.indexOf(theme || "system") + 1) % order.length]);
-  };
-
-  const ThemeIcon = () => {
-    if (!mounted) return <span style={{ width: 15, height: 15, display: "inline-block" }} />;
-    if (theme === "dark") return <Moon size={15} />;
-    if (theme === "system") return <Monitor size={15} />;
-    return <Sun size={15} />;
   };
 
   const sendMessage = async () => {
@@ -90,7 +103,7 @@ export default function ChatPage() {
     setSending(true);
     try {
       const msg = await chatApi.sendMessage(input.trim());
-      setMsgs(prev => [...prev, msg]);
+      setUserMsgs(prev => [...prev, msg]);
       setInput("");
     } catch { alert(t.chat.send + " error"); } finally { setSending(false); }
   };
@@ -104,8 +117,19 @@ export default function ChatPage() {
     if (!editingId || !editValue.trim()) return;
     try {
       const updated = await chatApi.editMessage(editingId, editValue.trim());
-      setMsgs(prev => prev.map(m => m.id === editingId ? { ...m, ...updated } : m));
+      setUserMsgs(prev => prev.map(m => m.id === editingId ? { ...m, ...updated } : m));
     } catch { /* silent */ } finally { setEditingId(null); }
+  };
+
+  // ── Derived ────────────────────────────────────────────────────────────────
+
+  const timeline = buildTimeline(userMsgs, adminMsgs);
+
+  const ThemeIcon = () => {
+    if (!mounted) return <span style={{ width: 15, height: 15, display: "inline-block" }} />;
+    if (theme === "dark") return <Moon size={15} />;
+    if (theme === "system") return <Monitor size={15} />;
+    return <Sun size={15} />;
   };
 
   const iconBtn: React.CSSProperties = {
@@ -115,7 +139,7 @@ export default function ChatPage() {
     fontSize: "0.78rem", fontWeight: 500,
   };
 
-  const timeline = buildTimeline(msgs, adminMsgs);
+  // ── Loading ────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -124,6 +148,8 @@ export default function ChatPage() {
       </div>
     );
   }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
@@ -142,7 +168,7 @@ export default function ChatPage() {
               <div>
                 <p style={{ fontWeight: 700, fontSize: "0.92rem", color: "var(--text)", margin: 0, letterSpacing: "-0.02em" }}>{t.chat.title}</p>
                 <p style={{ fontSize: "0.68rem", color: "var(--text-muted)", margin: 0, fontFamily: "JetBrains Mono, monospace" }}>
-                  {user ? user.name : "yarmatxonov.uz"}
+                  {user ? user.name : "sherzodxon.uz"}
                 </p>
               </div>
             </div>
@@ -241,116 +267,105 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Timeline */}
+        {/* ── Timeline ── */}
         {user && !fetching && timeline.length > 0 && (
           <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 4 }}>
 
-            {/* Separator */}
+            {/* History separator */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0 16px" }}>
               <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
               <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{t.chat.history}</span>
               <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
             </div>
 
-            {timeline.map(item => {
-              if (item.kind === "admin-direct") {
-                // Admin tomondan mustaqil xabar — chap taraf
-                return (
-                  <div key={item.id} style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 8, marginBottom: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.62rem", color: "#fff", flexShrink: 0 }}>SY</div>
-                    <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: 3 }}>
-                      <span style={{ fontSize: "0.65rem", color: "var(--accent)", fontWeight: 600, marginLeft: 2 }}>Sherzodxon</span>
-                      <div className="chat-bubble-admin" style={{ fontSize: "0.9rem", lineHeight: 1.6 }}>{item.content}</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 2 }}>
-                        <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmt(item.createdAt)}</span>
-                        {/* User o'qidimi? */}
-                        {item.readAt
-                          ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                          : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                        }
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
+            {timeline.map((item, idx) => {
+              const prev = timeline[idx - 1];
+              const showDate = !prev || !isSameDay(item.createdAt, prev.createdAt);
 
-              // User xabari — o'ng taraf
-              const msg = item as UserMessage & { kind: "user-msg" };
               return (
-                <div key={msg.id} style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
-                  {/* User bubble */}
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-                      {editingId === msg.id ? (
-                        <div style={{ display: "flex", gap: 6, width: "100%" }}>
-                          <input
-                            autoFocus value={editValue}
-                            onChange={e => setEditValue(e.target.value)}
-                            onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingId(null); }}
-                            style={{ flex: 1, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "0.88rem", outline: "none", fontFamily: "Sora, sans-serif" }}
-                          />
-                          <button onClick={saveEdit} style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><Check size={14} /></button>
-                          <button onClick={() => setEditingId(null)} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={14} /></button>
-                        </div>
-                      ) : (
-                        <div
-                          className="chat-bubble-user"
-                          style={{ fontSize: "0.9rem", lineHeight: 1.6, position: "relative", cursor: "default" }}
-                          onMouseEnter={e => { const btn = (e.currentTarget as HTMLElement).querySelector(".edit-btn") as HTMLElement; if (btn) btn.style.opacity = "1"; }}
-                          onMouseLeave={e => { const btn = (e.currentTarget as HTMLElement).querySelector(".edit-btn") as HTMLElement; if (btn) btn.style.opacity = "0"; }}
-                        >
-                          {msg.content}
-                          {msg.edited && <span style={{ fontSize: "0.6rem", opacity: 0.7, marginLeft: 6 }}>({t.chat.edited})</span>}
-                          <button
-                            className="edit-btn"
-                            onClick={() => startEdit(msg)}
-                            style={{ position: "absolute", top: -8, left: -8, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 6, padding: "3px 5px", cursor: "pointer", display: "flex", alignItems: "center", opacity: 0, transition: "opacity 0.15s", lineHeight: 0 }}
-                          >
-                            <Pencil size={11} />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Timestamp + o'qilgan belgisi */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                        <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmt(msg.createdAt)}</span>
-                        {msg.readByAdmin
-                          ? <CheckCheck size={11} style={{ color: "var(--accent)" }}  />
-                          : <Check size={11} style={{ color: "var(--text-muted)" }}  />
-                        }
-                      </div>
+                <div key={item.id}>
+                  {/* Date separator */}
+                  {showDate && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "12px 0 10px" }}>
+                      <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                      <span style={{ fontSize: "0.63rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", padding: "2px 10px", background: "var(--bg-secondary)", borderRadius: 20, border: "1px solid var(--border)" }}>
+                        {fmtDate(item.createdAt)}
+                      </span>
+                      <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
                     </div>
-                  </div>
+                  )}
 
-                  {/* Admin reply — chap taraf */}
-                  {msg.reply && (
-                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 8 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.62rem", color: "#fff", flexShrink: 0 }}>SY</div>
+                  {/* ── Admin message — left side ── */}
+                  {item.kind === "admin-direct" && (
+                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.62rem", color: "#fff", flexShrink: 0 }}>
+                        SY
+                      </div>
                       <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: 3 }}>
-                        <span style={{ fontSize: "0.65rem", color: "var(--accent)", fontWeight: 600, marginLeft: 2 }}>Sherzodxon</span>
                         <div className="chat-bubble-admin" style={{ fontSize: "0.9rem", lineHeight: 1.6 }}>
-                          {msg.reply}
-                          {msg.replyEdited && <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", marginLeft: 6 }}>({t.chat.edited})</span>}
+                          {item.content}
                         </div>
-                        <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", marginLeft: 2 }}>{fmt(msg.replyAt!)}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 2 }}>
+                          <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmt(item.createdAt)}</span>
+                          {/* {item.readAt
+                            ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
+                            : <Check size={11} style={{ color: "var(--text-muted)" }} />
+                          } */}
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Awaiting */}
-                  {!msg.reply && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 36 }}>
-                      <div style={{ display: "flex", gap: 3 }}>
-                        {[0, 1, 2].map(i => (
-                          <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--text-muted)", opacity: 0.5, animation: `chatBounce 1.2s ${i * 0.2}s ease-in-out infinite` }} />
-                        ))}
+                  {/* ── User message — right side ── */}
+                  {item.kind === "user-msg" && (() => {
+                    const msg = item as UserMessage & { kind: "user-msg" };
+                    return (
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+                        <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                          {editingId === msg.id ? (
+                            <div style={{ display: "flex", gap: 6, width: "100%" }}>
+                              <input
+                                autoFocus value={editValue}
+                                onChange={e => setEditValue(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingId(null); }}
+                                style={{ flex: 1, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "0.88rem", outline: "none", fontFamily: "Sora, sans-serif" }}
+                              />
+                              <button onClick={saveEdit} style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><Check size={14} /></button>
+                              <button onClick={() => setEditingId(null)} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={14} /></button>
+                            </div>
+                          ) : (
+                            <div
+                              className="chat-bubble-user"
+                              style={{ fontSize: "0.9rem", lineHeight: 1.6, position: "relative", cursor: "default" }}
+                              onMouseEnter={e => { const btn = (e.currentTarget as HTMLElement).querySelector(".edit-btn") as HTMLElement; if (btn) btn.style.opacity = "1"; }}
+                              onMouseLeave={e => { const btn = (e.currentTarget as HTMLElement).querySelector(".edit-btn") as HTMLElement; if (btn) btn.style.opacity = "0"; }}
+                            >
+                              {msg.content}
+                              {msg.edited && <span style={{ fontSize: "0.6rem", opacity: 0.7, marginLeft: 6 }}>({t.chat.edited})</span>}
+                              <button
+                                className="edit-btn"
+                                onClick={() => startEdit(msg)}
+                                style={{ position: "absolute", top: -8, left: -8, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 6, padding: "3px 5px", cursor: "pointer", display: "flex", alignItems: "center", opacity: 0, transition: "opacity 0.15s", lineHeight: 0 }}
+                              >
+                                <Pencil size={11} />
+                              </button>
+                            </div>
+                          )}
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmt(msg.createdAt)}</span>
+                            {msg.readByAdmin
+                              ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
+                              : <Check size={11} style={{ color: "var(--text-muted)" }} />
+                            }
+                          </div>
+                        </div>
                       </div>
-                      <span style={{ fontSize: "0.67rem", color: "var(--text-muted)" }}>{t.chat.awaiting}</span>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}
+
             <div ref={bottomRef} />
           </div>
         )}
@@ -382,16 +397,9 @@ export default function ChatPage() {
                 {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
             </div>
-            <p style={{ textAlign: "center", fontSize: "0.63rem", marginTop: 8, color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>
-              {t.chat.auto_refresh}
-            </p>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes chatBounce { 0%,100%{transform:translateY(0);opacity:0.4} 50%{transform:translateY(-5px);opacity:1} }
-      `}</style>
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>

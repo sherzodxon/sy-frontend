@@ -265,7 +265,7 @@ body{
 
 /* ─── Chat ─── */
 .chat-bubble-user{background:var(--accent);color:#fff;border-radius:18px 18px 4px 18px;padding:10px 16px}
-.chat-bubble-admin{background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:18px 18px 18px 4px;padding:10px 16px}
+.-admin{background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:18px 18px 18px 4px;padding:10px 16px}
 
 /* ─── Grid bg ─── */
 .grid-bg{
