@@ -92,7 +92,7 @@ export default function Hero() {
           <a href="#projects" className="btn-primary flex items-center">
             {t.hero.cta_projects} <ArrowDown size={15} />
           </a>
-          <a href="/resume.pdf"  target="_blank" rel="noopener noreferrer" className="btn-outline flex items-center">
+          <a  href="/files/resume.pdf"  target="_blank" rel="noopener noreferrer" download="Sherzodxon(2024)" className="btn-outline flex items-center">
             {t.hero.cta_resume} <Download size={15} />
           </a>
           <div style={{ width: 1, height: 32, background: "var(--border)", margin: "0 4px" }} />
