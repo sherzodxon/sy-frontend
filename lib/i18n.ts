@@ -103,7 +103,7 @@ export const projectsTranslations = {
     },
     {
       id: 7,
-      title: "Currency Rates",
+      title: "Valyuta kurslari",
       description: "Ushbu veb-saytda siz dunyoning barcha valyuta kurslarining joriy va tarixiy qiymatini bilib olishingiz mumkin.",
       tech: ["React", "SCSS", "Redux", "React Query"],
       status: "Faol",
@@ -147,7 +147,7 @@ export const projectsTranslations = {
     },
     {
       id: 6,
-      title: "Hamroh Muslim app",
+      title: "Hamroh Мусульманское приложение",
       description: "Здесь вы найдете расписание молитв для любого региона, перевод и аудиозаписи сур Корана, 99 имен Аллаха, календарь молитв на месяц и много другой необходимой информации.",
       tech: ["React", "SCSS", "Redux", "React Query"],
       status: "Активный",
@@ -155,7 +155,7 @@ export const projectsTranslations = {
     },
      {
       id: 7,
-      title: "Currency Rates",
+      title: "Курсы валют",
       description: "На этом сайте вы можете узнать текущие и исторические курсы всех мировых валют.",
       tech: ["React", "SCSS", "Redux", "React Query"],
       status: "Активный",
