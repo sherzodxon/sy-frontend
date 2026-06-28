@@ -273,7 +273,7 @@ export default function ChatPage() {
 
             {/* History separator */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0 16px" }}>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              <div style={{ flex: 1, height: 1, }} />
               <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{t.chat.history}</span>
               <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
             </div>
@@ -287,7 +287,7 @@ export default function ChatPage() {
                   {/* Date separator */}
                   {showDate && (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "12px 0 10px" }}>
-                      <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                      <div style={{ flex: 1, height: 1, background: "var(--border)", }} />
                       <span style={{ fontSize: "0.63rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", padding: "2px 10px", background: "var(--bg-secondary)", borderRadius: 20, border: "1px solid var(--border)" }}>
                         {fmtDate(item.createdAt)}
                       </span>
@@ -301,8 +301,8 @@ export default function ChatPage() {
                       <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.62rem", color: "#fff", flexShrink: 0 }}>
                         SY
                       </div>
-                      <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: 3 }}>
-                        <div className="chat-bubble-admin" style={{ fontSize: "0.9rem", lineHeight: 1.6 }}>
+                      <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: 3  }}>
+                        <div className="chat-bubble-admin" style={{ fontSize: "0.9rem", lineHeight: 1.6 ,background: "var(--bg-card)",padding: "8px 12px", borderRadius: "10px 10px 10px 2px"}}>
                           {item.content}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 2 }}>
