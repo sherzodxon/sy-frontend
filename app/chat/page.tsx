@@ -168,7 +168,7 @@ export default function ChatPage() {
               <div>
                 <p style={{ fontWeight: 700, fontSize: "0.92rem", color: "var(--text)", margin: 0, letterSpacing: "-0.02em" }}>{t.chat.title}</p>
                 <p style={{ fontSize: "0.68rem", color: "var(--text-muted)", margin: 0, fontFamily: "JetBrains Mono, monospace" }}>
-                  {user ? user.name : "sherzodxon.uz"}
+                  {user ? user.name : "yarmatxonov.uz"}
                 </p>
               </div>
             </div>

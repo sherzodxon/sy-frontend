@@ -278,19 +278,19 @@ export const socialsTranslations = {
     { name: "GitHub", url: "https://github.com/sherzodxon", icon: "Github" },
     { name: "Telegram", url: "https://t.me/sherzodxon", icon: "Send" },
     { name: "LinkedIn", url: "https://linkedin.com/in/sherzodxon", icon: "Linkedin" },
-    { name: "Email", url: "mailto:hello@sherzodxon.uz", icon: "Mail" },
+    { name: "Email", url: "mailto:yarmatxonovsherzodxon@gmail.com", icon: "Mail" },
   ],
   uz: [
     { name: "GitHub", url: "https://github.com/sherzodxon", icon: "Github" },
     { name: "Telegram", url: "https://t.me/sherzodxon", icon: "Send" },
     { name: "LinkedIn", url: "https://linkedin.com/in/sherzodxon", icon: "Linkedin" },
-    { name: "Email", url: "mailto:hello@sherzodxon.uz", icon: "Mail" },
+    { name: "Email", url: "mailto:yarmatxonovsherzodxon@gmail.com", icon: "Mail" },
   ],
   ru: [
     { name: "GitHub", url: "https://github.com/sherzodxon", icon: "Github" },
     { name: "Telegram", url: "https://t.me/sherzodxon", icon: "Send" },
     { name: "LinkedIn", url: "https://linkedin.com/in/sherzodxon", icon: "Linkedin" },
-    { name: "Email", url: "mailto:hello@sherzodxon.uz", icon: "Mail" },
+    { name: "Email", url: "mailto:yarmatxonovsherzodxon@gmail.com", icon: "Mail" },
   ],
 };
 
