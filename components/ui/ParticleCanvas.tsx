@@ -7,6 +7,16 @@ export default function ParticleCanvas() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // Sensorli (planshet/telefon) va zaif qurilmalarda butunlay ishga tushirmaymiz —
+    // CustomCursor'da qanday qilingan bo'lsa xuddi shunday
+    const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const isLowEndDevice =
+      (navigator as any).deviceMemory && (navigator as any).deviceMemory <= 2;
+    const hasFewCores =
+      navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
+    if (isCoarsePointer || isLowEndDevice || hasFewCores) return;
+
     const ctx = canvas.getContext("2d")!;
 
     // Accent rangini BIR MARTA o'qiymiz — resize va theme o'zgarganda yangilaymiz
@@ -49,7 +59,7 @@ export default function ParticleCanvas() {
         y: Math.random() * window.innerHeight,
         vx: (Math.random() - 0.5) * 0.35,
         vy: (Math.random() - 0.5) * 0.35,
-        r: Math.random() * 2 + 0.5,
+        r: Math.random() * 2 + 1,
         a: Math.random(),
       });
     }
@@ -60,7 +70,7 @@ export default function ParticleCanvas() {
 
     // Har bir zarracha uchun alpha hex-ini oldindan hisoblangan holda cache qilamiz
     const alphaCache = particles.map(p =>
-      Math.floor(p.a * 99).toString(16).padStart(2, "0")
+      Math.floor(60 + p.a * 140).toString(16).padStart(2, "0")
     );
 
     let rafId: number;
@@ -108,11 +118,11 @@ export default function ParticleCanvas() {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            const alpha = Math.floor((1 - d / CONNECT_DIST) * 30)
+            const alpha = Math.floor((1 - d / CONNECT_DIST) * 90)
               .toString(16)
               .padStart(2, "0");
             ctx.strokeStyle = accent + alpha;
-            ctx.lineWidth = 0.6;
+            ctx.lineWidth = 0.8;
             ctx.stroke();
           }
         }

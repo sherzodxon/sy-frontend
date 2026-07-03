@@ -328,7 +328,7 @@ export default function ChatPage() {
                                 autoFocus value={editValue}
                                 onChange={e => setEditValue(e.target.value)}
                                 onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingId(null); }}
-                                style={{ flex: 1, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "0.88rem", outline: "none", fontFamily: "Sora, sans-serif" }}
+                                style={{ flex: 1, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "16px", outline: "none", fontFamily: "Sora, sans-serif" }}
                               />
                               <button onClick={saveEdit} style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><Check size={14} /></button>
                               <button onClick={() => setEditingId(null)} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={14} /></button>
@@ -384,7 +384,7 @@ export default function ChatPage() {
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
                 placeholder={t.chat.placeholder}
-                style={{ flex: 1, padding: "10px 16px", borderRadius: 12, background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text)", fontSize: "0.9rem", outline: "none", fontFamily: "Sora, sans-serif", transition: "border-color 0.2s" }}
+                style={{ flex: 1, padding: "10px 16px", borderRadius: 12, background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text)", fontSize: "16px", outline: "none", fontFamily: "Sora, sans-serif", transition: "border-color 0.2s" }}
                 onFocus={e => (e.target.style.borderColor = "var(--accent)")}
                 onBlur={e => (e.target.style.borderColor = "var(--border)")}
               />

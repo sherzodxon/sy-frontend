@@ -137,7 +137,7 @@ useEffect(() => {
     caretColor: "var(--accent)",
     borderRadius: 12,
     width: "100%",
-    fontSize: "0.88rem",
+    fontSize: "16px",
     outline: "none",
     boxSizing: "border-box",
   };
