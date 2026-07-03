@@ -205,7 +205,7 @@ export default function AdminPage() {
                 <ShieldCheck size={24} style={{ color: "#fff" }} />
               </div>
               <h1 style={{ fontWeight: 700, fontSize: "1.2rem", color: "var(--text)", margin: "0 0 4px", letterSpacing: "-0.03em" }}>{at.login_title}</h1>
-              <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", margin: 0, fontFamily: "JetBrains Mono, monospace" }}>sherzodxon.uz / admin</p>
+              <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", margin: 0, fontFamily: "JetBrains Mono, monospace" }}>yarmatxonov.uz / admin</p>
             </div>
             <div style={{ padding: "28px 28px 32px" }}>
               <p style={{ fontSize: "0.72rem", fontWeight: 600, marginBottom: 8, color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase", letterSpacing: "0.07em" }}>
