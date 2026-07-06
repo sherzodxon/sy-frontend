@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Loader2, Lock, ShieldCheck, RefreshCw, LogOut, ArrowRight,
   Send, Check, CheckCheck, Search, MessageSquare, Users, ArrowLeft,
+  Pencil, Trash2, X, ChevronUp,
 } from "lucide-react";
 import { useLang } from "@/hooks/useLang";
 import { chatApi, AdminUser, UserMessage, AdminDirectMessage } from "@/services/api";
@@ -53,8 +54,17 @@ export default function AdminPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
 
+  // Pagination — Telegram uslubidagi bosqichma-bosqich yuklash
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+
+  // Adminning o'z xabarini tahrirlash
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
 
@@ -128,26 +138,67 @@ export default function AdminPage() {
     setLoadingMsgs(true);
     setUserMsgs([]);
     setAdminMsgs([]);
+    setHasMore(false);
+    setNextCursor(null);
     setMobileView("chat");
     prevCountRef.current = 0;
     try {
+      // Faqat eng so'nggi 20 ta xabar — qolganlari yuqoriga scroll qilinganda yuklanadi
       const data = await chatApi.adminGetConversation(user.id, token);
       setUserMsgs(data.messages);
       setAdminMsgs(data.adminMessages);
+      setHasMore(data.hasMore);
+      setNextCursor(data.nextCursor);
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, unreadCount: 0 } : u));
     } catch { /* silent */ } finally { setLoadingMsgs(false); }
   }, [token]);
 
-  // Fon rejimida (loading ko'rsatmasdan) joriy suhbatni yangilash
+  // Yuqoriga scroll qilinganda yana +20 ta eskiroq xabar yuklash (scroll pozitsiyasi saqlanadi)
+  const loadOlderMessages = useCallback(async () => {
+    if (!token || !selectedUser || !hasMore || loadingMore || !nextCursor) return;
+    setLoadingMore(true);
+    const el = chatScrollRef.current;
+    const prevScrollHeight = el?.scrollHeight ?? 0;
+    const prevScrollTop = el?.scrollTop ?? 0;
+    try {
+      const data = await chatApi.adminGetConversation(selectedUser.id, token, nextCursor);
+      const addedCount = data.messages.length + data.adminMessages.length;
+      setUserMsgs(prev => {
+        const existing = new Set(prev.map(m => m.id));
+        return [...data.messages.filter(m => !existing.has(m.id)), ...prev];
+      });
+      setAdminMsgs(prev => {
+        const existing = new Set(prev.map(m => m.id));
+        return [...data.adminMessages.filter(m => !existing.has(m.id)), ...prev];
+      });
+      setHasMore(data.hasMore);
+      setNextCursor(data.nextCursor);
+      // Eski xabarlar prepend qilingani uchun pastga avto-scroll bo'lmasligi kerak
+      prevCountRef.current += addedCount;
+      requestAnimationFrame(() => {
+        if (el) el.scrollTop = el.scrollHeight - prevScrollHeight + prevScrollTop;
+      });
+    } catch { /* silent */ } finally { setLoadingMore(false); }
+  }, [token, selectedUser, hasMore, loadingMore, nextCursor]);
+
+  const handleMessagesScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (e.currentTarget.scrollTop < 80) loadOlderMessages();
+  };
+
+  // Fon rejimida (loading ko'rsatmasdan) joriy oynani yangilash — faqat hozir yuklangan qismni
   const loadConversationSilent = useCallback(async (userId: string) => {
     if (!token) return;
     try {
-      const data = await chatApi.adminGetConversation(userId, token);
+      const currentTotal = userMsgs.length + adminMsgs.length;
+      const limit = Math.max(currentTotal, 20);
+      const data = await chatApi.adminGetConversation(userId, token, undefined, limit);
       setUserMsgs(data.messages);
       setAdminMsgs(data.adminMessages);
+      setHasMore(data.hasMore);
+      setNextCursor(data.nextCursor);
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, unreadCount: 0 } : u));
     } catch { /* silent */ }
-  }, [token]);
+  }, [token, userMsgs.length, adminMsgs.length]);
 
   // Sidebar — har 10 sekundda foydalanuvchilar ro'yxati va unread hisoblarini yangilash
   useEffect(() => {
@@ -182,6 +233,53 @@ export default function AdminPage() {
       setInput("");
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     } catch { /* silent */ } finally { setSending(false); }
+  };
+
+  // ── Edit (faqat adminning o'z yuborgan mustaqil xabarlari) ──────────────────
+
+  const startEditMsg = (msg: AdminDirectMessage) => {
+    setEditingMsgId(msg.id);
+    setEditValue(msg.content);
+  };
+
+  const saveEditMsg = async () => {
+    if (!editingMsgId || !editValue.trim() || !token) { setEditingMsgId(null); return; }
+    try {
+      const updated = await chatApi.adminEditMessage(editingMsgId, editValue.trim(), token);
+      setAdminMsgs(prev => prev.map(m => m.id === editingMsgId ? { ...m, ...updated } : m));
+    } catch { /* silent */ } finally { setEditingMsgId(null); }
+  };
+
+  // ── Delete ───────────────────────────────────────────────────────────────
+
+  const deleteMessage = async (item: ConvItem) => {
+    if (!token) return;
+    if (!window.confirm(at.confirm_delete_message)) return;
+    try {
+      if (item.kind === "admin-direct") {
+        await chatApi.adminDeleteMessage(item.id, token);
+        setAdminMsgs(prev => prev.filter(m => m.id !== item.id));
+      } else {
+        await chatApi.adminDeleteUserMessage(item.id, token);
+        setUserMsgs(prev => prev.filter(m => m.id !== item.id));
+      }
+    } catch { /* silent */ }
+  };
+
+  const deleteUser = async (user: AdminUser, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!token) return;
+    if (!window.confirm(at.confirm_delete_user)) return;
+    try {
+      await chatApi.adminDeleteUser(user.id, token);
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      if (selectedUser?.id === user.id) {
+        setSelectedUser(null);
+        setUserMsgs([]);
+        setAdminMsgs([]);
+        setMobileView("list");
+      }
+    } catch { /* silent */ }
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
@@ -310,6 +408,41 @@ export default function AdminPage() {
         @media (max-width: 480px) {
           .hide-on-mobile { display: none; }
         }
+
+        .admin-user-row:hover .admin-user-delete-btn { opacity: 1; }
+        .admin-user-delete-btn:hover { background: rgba(239,68,68,0.12) !important; color: #ef4444 !important; }
+
+        .admin-msg-bubble { position: relative; }
+        .admin-msg-actions {
+          position: absolute;
+          top: -11px;
+          display: flex;
+          gap: 3px;
+          opacity: 0;
+          transition: opacity 0.15s;
+        }
+        .admin-msg-bubble:hover .admin-msg-actions { opacity: 1; }
+        .admin-msg-action-btn {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          color: var(--text-muted);
+          border-radius: 6px;
+          padding: 4px 5px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          line-height: 0;
+        }
+        .admin-msg-action-btn:hover.danger { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+        .load-more-indicator {
+          display: flex;
+          justify-content: center;
+          padding: 10px 0 14px;
+          font-size: 0.72rem;
+          color: var(--text-muted);
+          font-family: "JetBrains Mono", monospace;
+        }
       `}</style>
 
       <div className="admin-wrapper">
@@ -371,6 +504,7 @@ export default function AdminPage() {
                   <div
                     key={u.id}
                     onClick={() => loadConversation(u)}
+                    className="admin-user-row"
                     style={{
                       padding: "11px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
                       background: isActive ? "var(--accent-dim)" : "transparent",
@@ -401,6 +535,14 @@ export default function AdminPage() {
                         {u.lastMessage ? u.lastMessage.content : u.email}
                       </p>
                     </div>
+                    <button
+                      className="admin-user-delete-btn"
+                      onClick={e => deleteUser(u, e)}
+                      title={at.delete_user}
+                      style={{ flexShrink: 0, background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 6, borderRadius: 8, display: "flex", alignItems: "center", opacity: 0, transition: "opacity 0.15s" }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 );
               })
@@ -438,7 +580,7 @@ export default function AdminPage() {
               </div>
 
               {/* Messages */}
-              <div className="messages-scroll" ref={chatScrollRef}>
+              <div className="messages-scroll" ref={chatScrollRef} onScroll={handleMessagesScroll}>
                 {loadingMsgs ? (
                   <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}>
                     <Loader2 size={24} style={{ color: "var(--accent)", animation: "spin 1s linear infinite" }} />
@@ -448,7 +590,14 @@ export default function AdminPage() {
                     <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{at.no_messages}</p>
                   </div>
                 ) : (
-                  timeline.map((item, idx) => {
+                  <>
+                    {loadingMore && (
+                      <div className="load-more-indicator">
+                        <Loader2 size={14} style={{ marginRight: 6, animation: "spin 1s linear infinite" }} />
+                        {at.loading_more}
+                      </div>
+                    )}
+                    {timeline.map((item, idx) => {
                     const prev = timeline[idx - 1];
                     const showDate = !prev || new Date(item.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
 
@@ -469,16 +618,36 @@ export default function AdminPage() {
                         {item.kind === "admin-direct" && (
                           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
                             <div style={{ maxWidth: "78%" }}>
-                              <div style={{ padding: "9px 13px", borderRadius: "16px 16px 4px 16px", background: "var(--accent)", fontSize: "0.88rem", color: "#fff", lineHeight: 1.55 }}>
-                                {item.content}
-                              </div>
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 3, paddingRight: 4 }}>
-                                <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
-                                {item.readAt
-                                  ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                                  : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                                }
-                              </div>
+                              {editingMsgId === item.id ? (
+                                <div style={{ display: "flex", gap: 6 }}>
+                                  <input
+                                    autoFocus value={editValue}
+                                    onChange={e => setEditValue(e.target.value)}
+                                    onKeyDown={e => { if (e.key === "Enter") saveEditMsg(); if (e.key === "Escape") setEditingMsgId(null); }}
+                                    style={{ flex: 1, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "0.88rem", outline: "none", fontFamily: "Sora, sans-serif" }}
+                                  />
+                                  <button onClick={saveEditMsg} style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><Check size={14} /></button>
+                                  <button onClick={() => setEditingMsgId(null)} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <div className="admin-msg-bubble">
+                                  <div className="admin-msg-actions" style={{ right: 4 }}>
+                                    <button className="admin-msg-action-btn" title={at.edit} onClick={() => startEditMsg(item)}><Pencil size={11} /></button>
+                                    <button className="admin-msg-action-btn danger" title={at.delete} onClick={() => deleteMessage(item)}><Trash2 size={11} /></button>
+                                  </div>
+                                  <div style={{ padding: "9px 13px", borderRadius: "16px 16px 4px 16px", background: "var(--accent)", fontSize: "0.88rem", color: "#fff", lineHeight: 1.55 }}>
+                                    {item.content}
+                                    {item.edited && <span style={{ fontSize: "0.62rem", opacity: 0.8, marginLeft: 6 }}>({at.edit.toLowerCase()})</span>}
+                                  </div>
+                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 3, paddingRight: 4 }}>
+                                    <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
+                                    {item.readAt
+                                      ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
+                                      : <Check size={11} style={{ color: "var(--text-muted)" }} />
+                                    }
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -487,23 +656,29 @@ export default function AdminPage() {
                         {item.kind === "user-msg" && (
                           <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 4 }}>
                             <div style={{ maxWidth: "78%" }}>
-                              <div style={{ padding: "9px 13px", borderRadius: "16px 16px 16px 4px", background: "var(--bg-card)", border: "1px solid var(--border)", fontSize: "0.88rem", color: "var(--text)", lineHeight: 1.55 }}>
-                                {item.content}
-                                {item.edited && <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", marginLeft: 6 }}>(tahrirlangan)</span>}
-                              </div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3, paddingLeft: 4 }}>
-                                <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
-                                {item.readByAdmin
-                                  ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                                  : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                                }
+                              <div className="admin-msg-bubble">
+                                <div className="admin-msg-actions" style={{ left: 4 }}>
+                                  <button className="admin-msg-action-btn danger" title={at.delete} onClick={() => deleteMessage(item)}><Trash2 size={11} /></button>
+                                </div>
+                                <div style={{ padding: "9px 13px", borderRadius: "16px 16px 16px 4px", background: "var(--bg-card)", border: "1px solid var(--border)", fontSize: "0.88rem", color: "var(--text)", lineHeight: 1.55 }}>
+                                  {item.content}
+                                  {item.edited && <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", marginLeft: 6 }}>(tahrirlangan)</span>}
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3, paddingLeft: 4 }}>
+                                  <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
+                                  {item.readByAdmin
+                                    ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
+                                    : <Check size={11} style={{ color: "var(--text-muted)" }} />
+                                  }
+                                </div>
                               </div>
                             </div>
                           </div>
                         )}
                       </div>
                     );
-                  })
+                  })}
+                  </>
                 )}
                 <div ref={bottomRef} style={{ height: 4 }} />
               </div>

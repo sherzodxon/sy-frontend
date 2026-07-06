@@ -15,15 +15,18 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return data;
 }
 
-function adminFetch<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
-  return fetch(`${BASE_URL}${path}`, {
+async function adminFetch<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
       ...options.headers,
     },
-  }).then(r => r.json());
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Request failed");
+  return data;
 }
 
 export const authApi = {
@@ -42,10 +45,20 @@ export const authApi = {
   me: () => request<User>("/auth/me"),
 };
 
+export interface ConversationPage {
+  messages: UserMessage[];
+  adminMessages: AdminDirectMessage[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
 export const chatApi = {
   // ── User ──
-  getMessages: () =>
-    request<{ messages: UserMessage[]; adminMessages: AdminDirectMessage[] }>("/chat/messages"),
+  // `before` — shu vaqtdan oldingi eskiroq xabarlarni yuklash uchun cursor (ISO string)
+  getMessages: (before?: string, limit = 20) =>
+    request<ConversationPage>(
+      `/chat/messages${before ? `?before=${encodeURIComponent(before)}&limit=${limit}` : `?limit=${limit}`}`
+    ),
 
   sendMessage: (content: string) =>
     request<UserMessage>("/chat/messages", {
@@ -64,9 +77,11 @@ export const chatApi = {
   adminGetUsers: (token: string) =>
     adminFetch<AdminUser[]>("/chat/admin/users", token),
 
-  adminGetConversation: (userId: string, token: string) =>
-    adminFetch<{ messages: UserMessage[]; adminMessages: AdminDirectMessage[] }>(
-      `/chat/admin/conversation/${userId}`, token
+  // `before` — eski xabarlarni bosqichma-bosqich yuklash uchun cursor (ISO string)
+  adminGetConversation: (userId: string, token: string, before?: string, limit = 20) =>
+    adminFetch<ConversationPage>(
+      `/chat/admin/conversation/${userId}${before ? `?before=${encodeURIComponent(before)}&limit=${limit}` : `?limit=${limit}`}`,
+      token
     ),
 
   adminSendMessage: (userId: string, content: string, token: string) =>
@@ -74,19 +89,31 @@ export const chatApi = {
       method: "POST", body: JSON.stringify({ content }),
     }),
 
-  adminReply: (msgId: string, reply: string, token: string) =>
-    adminFetch<Pick<UserMessage, "id" | "reply" | "replyAt">>(
-      `/chat/admin/reply/${msgId}`, token, {
-        method: "PATCH", body: JSON.stringify({ reply }),
+  // Adminning o'zi yuborgan mustaqil xabarini tahrirlash
+  adminEditMessage: (msgId: string, content: string, token: string) =>
+    adminFetch<Pick<AdminDirectMessage, "id" | "content" | "edited" | "editedAt">>(
+      `/chat/admin/message/${msgId}`, token, {
+        method: "PATCH", body: JSON.stringify({ content }),
       }
     ),
 
-  adminEditReply: (msgId: string, reply: string, token: string) =>
-    adminFetch<Pick<UserMessage, "id" | "reply" | "replyEdited">>(
-      `/chat/admin/reply/${msgId}/edit`, token, {
-        method: "PATCH", body: JSON.stringify({ reply }),
-      }
-    ),
+  // Adminning mustaqil xabarini o'chirish
+  adminDeleteMessage: (msgId: string, token: string) =>
+    adminFetch<{ id: string; deleted: boolean }>(`/chat/admin/message/${msgId}`, token, {
+      method: "DELETE",
+    }),
+
+  // Userning xabarini admin tomonidan o'chirish
+  adminDeleteUserMessage: (msgId: string, token: string) =>
+    adminFetch<{ id: string; deleted: boolean }>(`/chat/admin/user-message/${msgId}`, token, {
+      method: "DELETE",
+    }),
+
+  // Butun foydalanuvchini (barcha yozishmalari bilan) o'chirish
+  adminDeleteUser: (userId: string, token: string) =>
+    adminFetch<{ id: string; deleted: boolean }>(`/chat/admin/users/${userId}`, token, {
+      method: "DELETE",
+    }),
 };
 
 // ── Types ──
@@ -119,6 +146,8 @@ export interface AdminDirectMessage {
   content: string;
   createdAt: string;
   readAt?: string | null;
+  edited?: boolean;
+  editedAt?: string | null;
 }
 
 export interface AdminUser {

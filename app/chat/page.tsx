@@ -59,7 +59,14 @@ export default function ChatPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
+  // Pagination — eng so'nggi 20 ta xabar, tepaga scroll qilinganda yana +20
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const skipAutoScrollRef = useRef(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -68,18 +75,59 @@ export default function ChatPage() {
   const loadMessages = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await chatApi.getMessages();
+      // Fon rejimidagi yangilanishda hozir yuklangan oyna hajmini saqlab qolamiz
+      const currentTotal = userMsgs.length + adminMsgs.length;
+      const limit = Math.max(currentTotal, 20);
+      const data = await chatApi.getMessages(undefined, limit);
       setUserMsgs(data.messages);
       setAdminMsgs(data.adminMessages);
+      setHasMore(data.hasMore);
+      setNextCursor(data.nextCursor);
     } catch { /* silent */ }
-  }, [user]);
+  }, [user, userMsgs.length, adminMsgs.length]);
+
+  // Yuqoriga scroll qilinganda yana +20 ta eskiroq xabar yuklash
+  const loadOlderMessages = useCallback(async () => {
+    if (!user || !hasMore || loadingMore || !nextCursor) return;
+    setLoadingMore(true);
+    const el = scrollContainerRef.current;
+    const prevScrollHeight = el?.scrollHeight ?? 0;
+    const prevScrollTop = el?.scrollTop ?? 0;
+    try {
+      const data = await chatApi.getMessages(nextCursor);
+      setUserMsgs(prev => {
+        const existing = new Set(prev.map(m => m.id));
+        return [...data.messages.filter(m => !existing.has(m.id)), ...prev];
+      });
+      setAdminMsgs(prev => {
+        const existing = new Set(prev.map(m => m.id));
+        return [...data.adminMessages.filter(m => !existing.has(m.id)), ...prev];
+      });
+      setHasMore(data.hasMore);
+      setNextCursor(data.nextCursor);
+      skipAutoScrollRef.current = true;
+      requestAnimationFrame(() => {
+        if (el) el.scrollTop = el.scrollHeight - prevScrollHeight + prevScrollTop;
+      });
+    } catch { /* silent */ } finally { setLoadingMore(false); }
+  }, [user, hasMore, loadingMore, nextCursor]);
+
+  const handleScroll = () => {
+    if ((scrollContainerRef.current?.scrollTop ?? 999) < 80) loadOlderMessages();
+  };
 
   useEffect(() => {
     if (user) {
       setFetching(true);
-      loadMessages().finally(() => setFetching(false));
+      chatApi.getMessages().then(data => {
+        setUserMsgs(data.messages);
+        setAdminMsgs(data.adminMessages);
+        setHasMore(data.hasMore);
+        setNextCursor(data.nextCursor);
+      }).catch(() => {}).finally(() => setFetching(false));
     }
-  }, [user, loadMessages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -88,6 +136,7 @@ export default function ChatPage() {
   }, [user, loadMessages]);
 
   useEffect(() => {
+    if (skipAutoScrollRef.current) { skipAutoScrollRef.current = false; return; }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [userMsgs, adminMsgs]);
 
@@ -225,7 +274,7 @@ export default function ChatPage() {
       </header>
 
       {/* ── Messages ── */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px" }}>
+      <div ref={scrollContainerRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "24px 20px" }}>
 
         {/* Not logged in */}
         {!user && (
@@ -270,6 +319,13 @@ export default function ChatPage() {
         {/* ── Timeline ── */}
         {user && !fetching && timeline.length > 0 && (
           <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 4 }}>
+
+            {loadingMore && (
+              <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 14px", fontSize: "0.7rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>
+                <Loader2 size={13} className="animate-spin" style={{ marginRight: 6 }} />
+                {t.chat.loading_more}
+              </div>
+            )}
 
             {/* History separator */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0 16px" }}>
