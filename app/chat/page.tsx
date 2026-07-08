@@ -65,7 +65,6 @@ export default function ChatPage() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const skipAutoScrollRef = useRef(false);
 
   useEffect(() => setMounted(true), []);
@@ -86,13 +85,15 @@ export default function ChatPage() {
     } catch { /* silent */ }
   }, [user, userMsgs.length, adminMsgs.length]);
 
-  // Yuqoriga scroll qilinganda yana +20 ta eskiroq xabar yuklash
+  // Yuqoriga scroll qilinganda yana +20 ta eskiroq xabar yuklash.
+  // Eslatma: sahifa "position: sticky" header/footer bilan qurilgan — demak
+  // ICHKI div emas, balki BUTUN OYNA (window) scroll bo'ladi, shuning uchun
+  // scroll pozitsiyasini window.scrollY orqali kuzatamiz va tiklaymiz.
   const loadOlderMessages = useCallback(async () => {
     if (!user || !hasMore || loadingMore || !nextCursor) return;
     setLoadingMore(true);
-    const el = scrollContainerRef.current;
-    const prevScrollHeight = el?.scrollHeight ?? 0;
-    const prevScrollTop = el?.scrollTop ?? 0;
+    const prevScrollHeight = document.documentElement.scrollHeight;
+    const prevScrollY = window.scrollY;
     try {
       const data = await chatApi.getMessages(nextCursor);
       setUserMsgs(prev => {
@@ -107,14 +108,20 @@ export default function ChatPage() {
       setNextCursor(data.nextCursor);
       skipAutoScrollRef.current = true;
       requestAnimationFrame(() => {
-        if (el) el.scrollTop = el.scrollHeight - prevScrollHeight + prevScrollTop;
+        const newScrollHeight = document.documentElement.scrollHeight;
+        window.scrollTo(0, newScrollHeight - prevScrollHeight + prevScrollY);
       });
     } catch { /* silent */ } finally { setLoadingMore(false); }
   }, [user, hasMore, loadingMore, nextCursor]);
 
-  const handleScroll = () => {
-    if ((scrollContainerRef.current?.scrollTop ?? 999) < 80) loadOlderMessages();
-  };
+  // Oynaning o'zi tepaga yaqinlashganda (80px) eski xabarlarni yuklash
+  useEffect(() => {
+    const onWindowScroll = () => {
+      if (window.scrollY < 80) loadOlderMessages();
+    };
+    window.addEventListener("scroll", onWindowScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onWindowScroll);
+  }, [loadOlderMessages]);
 
   useEffect(() => {
     if (user) {
@@ -274,7 +281,7 @@ export default function ChatPage() {
       </header>
 
       {/* ── Messages ── */}
-      <div ref={scrollContainerRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "24px 20px" }}>
+      <div style={{ flex: 1, padding: "24px 20px" }}>
 
         {/* Not logged in */}
         {!user && (
@@ -379,15 +386,15 @@ export default function ChatPage() {
                       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
                         <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
                           {editingId === msg.id ? (
-                            <div style={{ display: "flex", gap: 6, width: "100%" }}>
+                            <div style={{ display: "flex", gap: 6, width: "100%", alignItems: "center" }}>
                               <input
                                 autoFocus value={editValue}
                                 onChange={e => setEditValue(e.target.value)}
                                 onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingId(null); }}
-                                style={{ flex: 1, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "16px", outline: "none", fontFamily: "Sora, sans-serif" }}
+                                style={{ flex: "1 1 auto", minWidth: 0, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "16px", outline: "none", fontFamily: "Sora, sans-serif" }}
                               />
-                              <button onClick={saveEdit} style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><Check size={14} /></button>
-                              <button onClick={() => setEditingId(null)} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={14} /></button>
+                              <button onClick={saveEdit} style={{ flexShrink: 0, width: 32, height: 32, minWidth: 32, boxSizing: "border-box", background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={14} /></button>
+                              <button onClick={() => setEditingId(null)} style={{ flexShrink: 0, width: 32, height: 32, minWidth: 32, boxSizing: "border-box", background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={14} /></button>
                             </div>
                           ) : (
                             <div

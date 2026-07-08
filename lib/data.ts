@@ -9,14 +9,14 @@ export const projects = [
     status: "Active",
   },
   {
-    id: 2,
-    title: "Typing Test System",
-    description:
-      "Monkeytype-style typing test platform with admin results management, live WPM tracking, and anti-cheat measures. Deployed on Vercel + Render.",
-    tech: ["Next.js 14", "Express", "PostgreSQL", "TailwindCSS"],
-    link: null,
-    status: "Active",
-  },
+  id: 2,
+  title: "EdEx Learning Management System",
+  description:
+    "A full-featured learning management and online examination system with Administrator, Teacher, and Student portals. Includes test management, automatic assessment, real-time exam monitoring, role-based permissions, and a secure, scalable architecture.",
+  tech: ["Next.js 14", "Express", "PostgreSQL", "TailwindCSS"],
+  link: null,
+  status: "Active",
+},
   {
     id: 3,
     title: "Gradoria — School Grading PWA",

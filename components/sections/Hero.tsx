@@ -4,25 +4,29 @@ import { useLang } from "@/hooks/useLang";
 import { skillsTranslations } from "@/lib/i18n";
 import TypeWriter from "@/components/ui/TypeWriter";
 import Counter from "@/components/ui/Counter";
+import TelegramIcon from "../ui/TelegramIcon";
+import LinkedInIcon from "../ui/LinkedinIcon";
+import GmailIcon from "../ui/GmailIcon";
+import GitHubIcon from "../ui/GithubIcon";
 
 const socialsTranslations = {
   en: [
-    { icon: <GitFork size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
-    { icon: <Send size={18}/>, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
-    { icon: <Link2 size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
-    { icon: <Mail size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
+    { icon: <GitHubIcon size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
+    { icon: <TelegramIcon size={18} />, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
+    { icon: <LinkedInIcon size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
+    { icon: <GmailIcon size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
   ],
   uz: [
-    { icon: <GitFork size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
-    { icon: <Send size={18}/>, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
-    { icon: <Link2 size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
-    { icon: <Mail size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
+    { icon: <GitHubIcon size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
+    { icon: <TelegramIcon size={18} />, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
+    { icon: <LinkedInIcon size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
+    { icon: <GmailIcon size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
   ],
   ru: [
-    { icon: <GitFork size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
-    { icon: <Send size={18}/>, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
-    { icon: <Link2 size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
-    { icon: <Mail size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
+    { icon: <GitHubIcon size={18}/>, href: "https://github.com/sherzodxon", label: "GitHub" },
+    { icon: <TelegramIcon size={18} />, href: "https://t.me/sh_yarmatxonov", label: "Telegram" },
+    { icon: <LinkedInIcon size={18}/>, href: "https://linkedin.com/in/sherzodxon", label: "LinkedIn" },
+    { icon: <GmailIcon size={18}/>, href: "mailto:yarmatxonovsherzodxon@gmail.com", label: "Email" },
   ],
 };
 
@@ -88,20 +92,24 @@ export default function Hero() {
           ))}
         </div>
 
-        <div className="fade-up fade-up-5" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 56 }}>
-          <a href="#projects" className="btn-primary flex items-center">
+        <div className="fade-up fade-up-5" style={{gap: 12, marginBottom: 56 }}>
+          <div style={{display:"flex",marginBottom:"20px"}}>
+            <a href="#projects" className="btn-primary flex items-center" style={{marginRight:"10px",}}>
             {t.hero.cta_projects} <ArrowDown size={15} />
           </a>
-          <a  href="/files/resume.pdf"  target="_blank" rel="noopener noreferrer" download="Sherzodxon(2024)" className="btn-outline flex items-center">
+          <a  href="/files/resume.pdf"   target="_blank" rel="noopener noreferrer" download="Sherzodxon(2024)" className="btn-outline flex items-center">
             {t.hero.cta_resume} <Download size={15} />
           </a>
-          <div style={{ width: 1, height: 32, background: "var(--border)", margin: "0 4px" }} />
-          {socials.map(s => (
+          </div>
+         
+         <div style={{display:"flex"}}>
+           {socials.map(s => (
             <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-              title={s.label} className="social-icon" style={{ width: 40, height: 40, borderRadius: 10 }}>
+              title={s.label} className="social-icon" style={{ width: 40, height: 40, borderRadius: 10,marginRight:"10px" }}>
               {s.icon}
             </a>
           ))}
+         </div>
         </div>
 
         <div className="fade-up fade-up-5" style={{

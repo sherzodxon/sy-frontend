@@ -1,12 +1,16 @@
 "use client";
 import { GitFork, Send, Link2, Mail, Heart } from "lucide-react";
 import { useLang } from "@/hooks/useLang";
+import TelegramIcon from "./ui/TelegramIcon";
+import LinkedInIcon from "./ui/LinkedinIcon";
+import GitHubIcon from "./ui/GithubIcon";
+import GmailIcon from "./ui/GmailIcon";
 
 const socials = [
-  { name:"GitHub",   href:"https://github.com/sherzodxon",      icon:<GitFork size={16}/> },
-  { name:"Telegram", href:"https://t.me/sh_yarmatxonov",            icon:<Send size={16}/> },
-  { name:"LinkedIn", href:"https://linkedin.com/in/sherzodxon", icon:<Link2 size={16}/> },
-  { name:"Email",    href:"mailto:yarmatxonovsherzodxon@gmail.com",         icon:<Mail size={16}/> },
+  { name:"GitHub",   href:"https://github.com/sherzodxon",      icon:<GitHubIcon size={16}/> },
+  { name:"Telegram", href:"https://t.me/sh_yarmatxonov",      icon:<TelegramIcon size={16}/>},
+  { name:"LinkedIn", href:"https://linkedin.com/in/sherzodxon", icon:<LinkedInIcon size={16}/> },
+  { name:"Email",    href:"mailto:yarmatxonovsherzodxon@gmail.com",  icon:<GmailIcon size={16}/> },
 ];
 
 export default function Footer() {

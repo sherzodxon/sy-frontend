@@ -1,15 +1,27 @@
 export type Locale = "en" | "uz" | "ru";
 
-export const locales: { code: Locale; label: string; flag: string }[] = [
-  { code: "en", label: "EN", flag: "🇺🇸" },
-  { code: "uz", label: "UZ", flag: "🇺🇿" },
-  { code: "ru", label: "RU", flag: "🇷🇺" },
+export const locales: {
+  code: Locale;label: string;flag: string
+} [] = [{
+    code: "en",
+    label: "EN",
+    flag: "🇺🇸"
+  },
+  {
+    code: "uz",
+    label: "UZ",
+    flag: "🇺🇿"
+  },
+  {
+    code: "ru",
+    label: "RU",
+    flag: "🇷🇺"
+  },
 ];
 
 // Projects data with translations (link qo'shilgan)
 export const projectsTranslations = {
-  en: [
-    {
+  en: [{
       id: 1,
       title: "EdEx Exam Platform",
       description: "Three-stage school olympiad platform covering typing tests, quizzes, and document submissions. Built with strict anti-cheat measures and real-time scoring.",
@@ -19,11 +31,11 @@ export const projectsTranslations = {
     },
     {
       id: 2,
-      title: "Typing Test System",
-      description: "Monkeytype-style typing test platform with admin results management, live WPM tracking, and anti-cheat measures. Deployed on Vercel + Render.",
+      title: "EdEx Online Test Platform",
+      description: "Comprehensive online examination platform featuring Administrator, Teacher, and Student roles. Supports test creation, scheduling, automatic grading, real-time monitoring, question management, and secure role-based access for educational institutions.",
       tech: ["Next.js 14", "Express", "PostgreSQL", "TailwindCSS"],
       status: "Active",
-      link: "https://edexexam.uz",
+      link: "https://test.edexschool.uz",
     },
     {
       id: 3,
@@ -33,7 +45,7 @@ export const projectsTranslations = {
       status: "Active",
       link: "https://test.edexschool.uz",
     },
-   
+
     {
       id: 5,
       title: "EdEx Teacher App",
@@ -58,10 +70,9 @@ export const projectsTranslations = {
       status: "Completed",
       link: "https://kursonline.uz",
     },
-    
+
   ],
-  uz: [
-    {
+  uz: [{
       id: 1,
       title: "EdEx Imtihon Platformasi",
       description: "Matn terish testlari, viktorinalar va hujjat topshirishni o'z ichiga olgan uch bosqichli maktab olimpiadasi platformasi. Qattiq antichiqish choralari va real vaqtda ball hisoblash bilan qurilgan.",
@@ -71,11 +82,11 @@ export const projectsTranslations = {
     },
     {
       id: 2,
-      title: "Matn Terish Test Tizimi",
-      description: "Monkeytype uslubidagi matn terish test platformasi, admin natijalarni boshqarish, jonli WPM kuzatuvi va antichiqish choralari bilan. Vercel + Renderda joylashtirilgan.",
+      title: "EdEx Onlayn Test Platformasi",
+      description: "Administrator, O'qituvchi va O'quvchi rollariga ega zamonaviy onlayn test platformasi. Test yaratish, vaqtni boshqarish, avtomatik baholash, real vaqt monitoringi, savollarni boshqarish hamda rollarga asoslangan xavfsiz tizimni taqdim etadi.",
       tech: ["Next.js 14", "Express", "PostgreSQL", "TailwindCSS"],
       status: "Faol",
-      link: "https://edex-exam.uz",
+      link: "https://test.edexschool.uz",
     },
     {
       id: 3,
@@ -109,10 +120,9 @@ export const projectsTranslations = {
       status: "Faol",
       link: "https://kursonline.uz",
     },
-    
+
   ],
-  ru: [
-    {
+  ru: [{
       id: 1,
       title: "EdEx Экзаменационная Платформа",
       description: "Трёхуровневая платформа для школьных олимпиад, включающая тесты на печать, викторины и загрузку документов. Строгие меры защиты от списывания и подсчёт очков в реальном времени.",
@@ -122,11 +132,11 @@ export const projectsTranslations = {
     },
     {
       id: 2,
-      title: "Система Тестирования Печати",
-      description: "Платформа для тестирования печати в стиле Monkeytype с управлением результатами администратора, отслеживанием WPM в реальном времени и защитой от списывания. Размещено на Vercel + Render.",
+      title: "Онлайн Платформа Тестирования EdEx",
+      description: "Современная онлайн-платформа тестирования с ролями Администратора, Преподавателя и Ученика. Поддерживает создание тестов, управление расписанием, автоматическую проверку, мониторинг в реальном времени, управление вопросами и безопасную систему разграничения доступа.",
       tech: ["Next.js 14", "Express", "PostgreSQL", "TailwindCSS"],
       status: "Активный",
-       link: "https://edex-exam.uz",
+      link: "https://test.edexschool.uz",
     },
     {
       id: 3,
@@ -136,7 +146,7 @@ export const projectsTranslations = {
       status: "Активный",
       link: "https://test.edexschool.uz",
     },
-    
+
     {
       id: 5,
       title: "Приложение Учителя EdEx",
@@ -153,7 +163,7 @@ export const projectsTranslations = {
       status: "Активный",
       link: "https://hamroh.com.uz",
     },
-     {
+    {
       id: 7,
       title: "Курсы валют",
       description: "На этом сайте вы можете узнать текущие и исторические курсы всех мировых валют.",
@@ -161,14 +171,13 @@ export const projectsTranslations = {
       status: "Активный",
       link: "https://kursonline.uz",
     },
-   
+
   ],
 };
 
 // Experiences data with translations (link qo'shilgan)
 export const experiencesTranslations = {
-  en: [
-    {
+  en: [{
       id: 1,
       title: "Full-Stack Developer",
       company: "EdEx School",
@@ -199,8 +208,7 @@ export const experiencesTranslations = {
       tech: ["React", "HTML", "SCSS", "CSS"],
     },
   ],
-  uz: [
-    {
+  uz: [{
       id: 1,
       title: "Full-Stack Dasturchi",
       company: "EdEx Maktabi",
@@ -231,8 +239,7 @@ export const experiencesTranslations = {
       tech: ["React", "HTML", "SCSS", "CSS"],
     },
   ],
-  ru: [
-    {
+  ru: [{
       id: 1,
       title: "Full-Stack Разработчик",
       company: "Школа EdEx",
@@ -260,7 +267,7 @@ export const experiencesTranslations = {
       duration: "2021 — 2023",
       current: false,
       description: "Создавал адаптивные веб-приложения и изучал современные практики разработки. Работал с React, Node.js и SQL базами данных в совместной командной среде.",
-       tech: ["React", "HTML", "SCSS", "CSS"],
+      tech: ["React", "HTML", "SCSS", "CSS"],
     },
   ],
 };
@@ -274,23 +281,68 @@ export const skillsTranslations = {
 
 // Socials (platform names can be translated)
 export const socialsTranslations = {
-  en: [
-    { name: "GitHub", url: "https://github.com/sherzodxon", icon: "Github" },
-    { name: "Telegram", url: "https://t.me/sherzodxon", icon: "Send" },
-    { name: "LinkedIn", url: "https://linkedin.com/in/sherzodxon", icon: "Linkedin" },
-    { name: "Email", url: "mailto:yarmatxonovsherzodxon@gmail.com", icon: "Mail" },
+  en: [{
+      name: "GitHub",
+      url: "https://github.com/sherzodxon",
+      icon: "GithubIcon"
+    },
+    {
+      name: "Telegram",
+      url: "https://t.me/sherzodxon",
+      icon: "TelegramIcon"
+    },
+    {
+      name: "LinkedIn",
+      url: "https://linkedin.com/in/sherzodxon",
+      icon: "LinkedinIcon"
+    },
+    {
+      name: "Email",
+      url: "mailto:yarmatxonovsherzodxon@gmail.com",
+      icon: "GmailIcon"
+    },
   ],
-  uz: [
-    { name: "GitHub", url: "https://github.com/sherzodxon", icon: "Github" },
-    { name: "Telegram", url: "https://t.me/sherzodxon", icon: "Send" },
-    { name: "LinkedIn", url: "https://linkedin.com/in/sherzodxon", icon: "Linkedin" },
-    { name: "Email", url: "mailto:yarmatxonovsherzodxon@gmail.com", icon: "Mail" },
+  uz: [{
+      name: "GitHub",
+      url: "https://github.com/sherzodxon",
+      icon: "GithubIcon"
+    },
+    {
+      name: "Telegram",
+      url: "https://t.me/sherzodxon",
+      icon: "TelegramICon"
+    },
+    {
+      name: "LinkedIn",
+      url: "https://linkedin.com/in/sherzodxon",
+      icon: "LinkedinIcon"
+    },
+    {
+      name: "Email",
+      url: "mailto:yarmatxonovsherzodxon@gmail.com",
+      icon: "GmailIcon"
+    },
   ],
-  ru: [
-    { name: "GitHub", url: "https://github.com/sherzodxon", icon: "Github" },
-    { name: "Telegram", url: "https://t.me/sherzodxon", icon: "Send" },
-    { name: "LinkedIn", url: "https://linkedin.com/in/sherzodxon", icon: "Linkedin" },
-    { name: "Email", url: "mailto:yarmatxonovsherzodxon@gmail.com", icon: "Mail" },
+  ru: [{
+      name: "GitHub",
+      url: "https://github.com/sherzodxon",
+      icon: "Github"
+    },
+    {
+      name: "Telegram",
+      url: "https://t.me/sherzodxon",
+      icon: "TelegramIcon"
+    },
+    {
+      name: "LinkedIn",
+      url: "https://linkedin.com/in/sherzodxon",
+      icon: "LinkedinIcon"
+    },
+    {
+      name: "Email",
+      url: "mailto:yarmatxonovsherzodxon@gmail.com",
+      icon: "LinkedinIcon"
+    },
   ],
 };
 
@@ -309,7 +361,7 @@ export const translations = {
       tagline: "This is a website about me",
       description: "Full-Stack Developer crafting modern web & mobile applications. Passionate about clean architecture, exceptional UX, and scalable systems.",
       cta_projects: "View Projects",
-      cta_resume: "Download Resume",
+      cta_resume: "Resume",
       stats_exp: "Years exp.",
       stats_projects: "Projects",
       stats_lang: "Languages",
@@ -326,7 +378,7 @@ export const translations = {
       subtitle: "Professional journey",
       present: "Present",
     },
-    language: { 
+    language: {
       title: "Languages",
       items: {
         uzbek: "Uzbek (Native)",
@@ -430,7 +482,7 @@ export const translations = {
       tagline: "Bu men haqimdagi sayt",
       description: "Zamonaviy veb va mobil ilovalar yaratuvchi Full-Stack dasturchi. Toza arxitektura, ajoyib UX va kengaytiriladigan tizimlar mutaxassisi",
       cta_projects: "Loyihalarni Ko'rish",
-      cta_resume: "Rezyume Yuklab Olish",
+      cta_resume: "Rezyume",
       stats_exp: "Yil tajriba",
       stats_projects: "Loyihalar",
       stats_lang: "Tillar",
@@ -447,7 +499,7 @@ export const translations = {
       subtitle: "Professional yo'lim",
       present: "Hozir",
     },
-    language: { 
+    language: {
       title: "Tillar",
       items: {
         uzbek: "O'zbek (Ona tili)",
@@ -480,7 +532,7 @@ export const translations = {
       no_messages: "Hali xabar yo'q",
       no_messages_hint: "Birinchi xabar yuboring 👋",
       awaiting: "Javob kutilmoqda...",
-      loading_more: "Eski xabarlar yuklanmoqda...",
+      loading_more: "yuklanmoqda...",
       auto_refresh: "Enter — yuborish · 10s da avtomatik yangilanadi",
       sign_in_btn: "Kirish / Ro'yxatdan o'tish",
       logout: "Chiqish",
@@ -511,7 +563,7 @@ export const translations = {
       send: "Yuborish",
       replied: "Javob berildi",
       pending: "Kutilmoqda",
-      edit: "Tahrirlash",
+      edit: "Tahrirlangan",
       save: "Saqlash",
       cancel: "Bekor qilish",
       read: "O'qildi",
@@ -551,7 +603,7 @@ export const translations = {
       tagline: "Это сайт обо мне",
       description: "Full-Stack разработчик, создающий современные веб и мобильные приложения. Увлечён чистой архитектурой, отличным UX и масштабируемыми системами.",
       cta_projects: "Посмотреть проекты",
-      cta_resume: "Скачать резюме",
+      cta_resume: "Pезюме",
       stats_exp: "Лет опыта",
       stats_projects: "Проекты",
       stats_lang: "Языки",
@@ -568,7 +620,7 @@ export const translations = {
       subtitle: "Профессиональный путь",
       present: "Сейчас",
     },
-    language: { 
+    language: {
       title: "Языки",
       items: {
         uzbek: "Узбекский (Родной)",

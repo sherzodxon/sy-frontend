@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import {
   Loader2, Lock, ShieldCheck, RefreshCw, LogOut, ArrowRight,
   Send, Check, CheckCheck, Search, MessageSquare, Users, ArrowLeft,
@@ -37,6 +37,154 @@ function buildTimeline(msgs: UserMessage[], adminMsgs: AdminDirectMessage[]): Co
   return all.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 }
 
+const UserRow = memo(function UserRow({
+  user, isActive, deleteUserLabel, onSelect, onDelete,
+}: {
+  user: AdminUser;
+  isActive: boolean;
+  deleteUserLabel: string;
+  onSelect: (user: AdminUser) => void;
+  onDelete: (user: AdminUser, e: React.MouseEvent) => void;
+}) {
+  return (
+    <div
+      onClick={() => onSelect(user)}
+      className="admin-user-row"
+      style={{
+        padding: "11px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+        background: isActive ? "var(--accent-dim)" : "transparent",
+        borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
+        transition: "all 0.15s",
+      }}
+    >
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "1rem", color: "#fff", fontFamily: "Sora, sans-serif" }}>
+          {user.name[0]?.toUpperCase()}
+        </div>
+        {user.unreadCount > 0 && (
+          <span style={{ position: "absolute", top: -3, right: -3, background: "#ef4444", color: "#fff", borderRadius: "50%", minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 700, border: "2px solid var(--bg)", padding: "0 3px" }}>
+            {user.unreadCount > 9 ? "9+" : user.unreadCount}
+          </span>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <p style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</p>
+          {user.lastMessage && (
+            <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", flexShrink: 0, marginLeft: 6 }}>
+              {fmt(user.lastMessage.createdAt)}
+            </span>
+          )}
+        </div>
+        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {user.lastMessage ? user.lastMessage.content : user.email}
+        </p>
+      </div>
+      <button
+        className="admin-user-delete-btn"
+        onClick={e => onDelete(user, e)}
+        title={deleteUserLabel}
+        style={{ flexShrink: 0, background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 6, borderRadius: 8, display: "flex", alignItems: "center", transition: "opacity 0.15s" }}
+      >
+        <Trash2 color="#E86048" size={14} />
+      </button>
+    </div>
+  );
+});
+
+const MessageBubble = memo(function MessageBubble({
+  item, showDate, isEditing, editValue, at,
+  onEditValueChange, onSaveEdit, onCancelEdit, onStartEdit, onDelete,
+}: {
+  item: ConvItem;
+  showDate: boolean;
+  isEditing: boolean;
+  editValue: string;
+  at: any;
+  onEditValueChange: (v: string) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onStartEdit: (msg: AdminDirectMessage) => void;
+  onDelete: (item: ConvItem) => void;
+}) {
+  return (
+    <div>
+      {/* Date separator */}
+      {showDate && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "10px 0 14px" }}>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          <span style={{ fontSize: "0.63rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", padding: "2px 10px", background: "var(--bg-secondary)", borderRadius: 20, border: "1px solid var(--border)" }}>
+            {new Date(item.createdAt).toLocaleDateString([], { day: "2-digit", month: "long", year: "numeric" })}
+          </span>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+        </div>
+      )}
+
+      {/* Admin message — right */}
+      {item.kind === "admin-direct" && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+          <div style={{ maxWidth: "78%", minWidth: 0 }}>
+            {isEditing ? (
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input
+                  autoFocus value={editValue}
+                  onChange={e => onEditValueChange(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") onSaveEdit(); if (e.key === "Escape") onCancelEdit(); }}
+                  style={{ flex: "1 1 auto", minWidth: 0, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "0.88rem", outline: "none", fontFamily: "Sora, sans-serif" }}
+                />
+                <button onClick={onSaveEdit} className="edit-mode-btn" style={{ background: "var(--accent)", border: "none", color: "#fff" }}><Check size={14} /></button>
+                <button onClick={onCancelEdit} className="edit-mode-btn" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)" }}><X size={14} /></button>
+              </div>
+            ) : (
+              <div className="admin-msg-bubble">
+                <div className="admin-msg-actions" style={{ right: 4 }}>
+                  <button className="admin-msg-action-btn" title={at.edit} onClick={() => onStartEdit(item)}><Pencil size={11} /></button>
+                  <button className="admin-msg-action-btn danger" title={at.delete} onClick={() => onDelete(item)}><Trash2 size={11} /></button>
+                </div>
+                <div style={{ padding: "9px 13px", borderRadius: "16px 16px 4px 16px", background: "var(--accent)", fontSize: "0.88rem", color: "#fff", lineHeight: 1.55 }}>
+                  {item.content}
+                  {item.edited && <span style={{ fontSize: "0.62rem", opacity: 0.8, marginLeft: 6 }}>({at.edit.toLowerCase()})</span>}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 3, paddingRight: 4 }}>
+                  <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
+                  {item.readAt
+                    ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
+                    : <Check size={11} style={{ color: "var(--text-muted)" }} />
+                  }
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* User message — left */}
+      {item.kind === "user-msg" && (
+        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 4 }}>
+          <div style={{ maxWidth: "78%" }}>
+            <div className="admin-msg-bubble">
+              <div className="admin-msg-actions" style={{ left: 4 }}>
+                <button className="admin-msg-action-btn danger" title={at.delete} onClick={() => onDelete(item)}><Trash2 size={11} /></button>
+              </div>
+              <div style={{ padding: "9px 13px", borderRadius: "16px 16px 16px 4px", background: "var(--bg-card)", border: "1px solid var(--border)", fontSize: "0.88rem", color: "var(--text)", lineHeight: 1.55 }}>
+                {item.content}
+                {item.edited && <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", marginLeft: 6 }}>(tahrirlangan)</span>}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3, paddingLeft: 4 }}>
+                <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
+                {item.readByAdmin
+                  ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
+                  : <Check size={11} style={{ color: "var(--text-muted)" }} />
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
 export default function AdminPage() {
   const { t } = useLang();
   const at = t.admin;
@@ -72,6 +220,17 @@ export default function AdminPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
+
+  // Klaviaturadan yozishda butun xabarlar/user ro'yxati qayta render bo'lmasligi uchun
+  // callback'lar state'ga emas, ref'larga tayanadi (React.memo optimallashuvi saqlanadi)
+  const editingMsgIdRef = useRef<string | null>(null);
+  const editValueRef = useRef("");
+  const tokenRef = useRef<string | null>(null);
+  const selectedUserRef = useRef<AdminUser | null>(null);
+  useEffect(() => { editingMsgIdRef.current = editingMsgId; }, [editingMsgId]);
+  useEffect(() => { editValueRef.current = editValue; }, [editValue]);
+  useEffect(() => { tokenRef.current = token; }, [token]);
+  useEffect(() => { selectedUserRef.current = selectedUser; }, [selectedUser]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
 
@@ -200,10 +359,10 @@ export default function AdminPage() {
     } catch { /* silent */ }
   }, [token, userMsgs.length, adminMsgs.length]);
 
-  // Sidebar — har 10 sekundda foydalanuvchilar ro'yxati va unread hisoblarini yangilash
+  // Sidebar — har 30 sekundda foydalanuvchilar ro'yxati va unread hisoblarini yangilash
   useEffect(() => {
     if (!token) return;
-    const timer = setInterval(loadUsers, 10000);
+    const timer = setInterval(loadUsers, 30000);
     return () => clearInterval(timer);
   }, [token, loadUsers]);
 
@@ -224,63 +383,77 @@ export default function AdminPage() {
 
   // ── Send — faqat adminMessage ─────────────────────────────────────────────
 
-  const sendMessage = async () => {
-    if (!input.trim() || !selectedUser || !token || sending) return;
+  const sendMessage = useCallback(async () => {
+    const tok = tokenRef.current;
+    const user = selectedUserRef.current;
+    if (!input.trim() || !user || !tok || sending) return;
     setSending(true);
     try {
-      const msg = await chatApi.adminSendMessage(selectedUser.id, input.trim(), token);
+      const msg = await chatApi.adminSendMessage(user.id, input.trim(), tok);
       setAdminMsgs(prev => [...prev, msg]);
       setInput("");
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     } catch { /* silent */ } finally { setSending(false); }
-  };
+  }, [input, sending]);
 
   // ── Edit (faqat adminning o'z yuborgan mustaqil xabarlari) ──────────────────
+  // deps: [] — barqaror identity, MessageBubble'lardagi React.memo buzilmaydi
 
-  const startEditMsg = (msg: AdminDirectMessage) => {
+  const startEditMsg = useCallback((msg: AdminDirectMessage) => {
     setEditingMsgId(msg.id);
     setEditValue(msg.content);
-  };
+  }, []);
 
-  const saveEditMsg = async () => {
-    if (!editingMsgId || !editValue.trim() || !token) { setEditingMsgId(null); return; }
+  const cancelEditMsg = useCallback(() => setEditingMsgId(null), []);
+
+  const saveEditMsg = useCallback(async () => {
+    const id = editingMsgIdRef.current;
+    const value = editValueRef.current;
+    const tok = tokenRef.current;
+    if (!id || !value.trim() || !tok) { setEditingMsgId(null); return; }
     try {
-      const updated = await chatApi.adminEditMessage(editingMsgId, editValue.trim(), token);
-      setAdminMsgs(prev => prev.map(m => m.id === editingMsgId ? { ...m, ...updated } : m));
+      const updated = await chatApi.adminEditMessage(id, value.trim(), tok);
+      setAdminMsgs(prev => prev.map(m => m.id === id ? { ...m, ...updated } : m));
     } catch { /* silent */ } finally { setEditingMsgId(null); }
-  };
+  }, []);
 
   // ── Delete ───────────────────────────────────────────────────────────────
+  // deps: [] — token/at/selectedUser ref orqali o'qiladi, identity o'zgarmaydi
 
-  const deleteMessage = async (item: ConvItem) => {
-    if (!token) return;
-    if (!window.confirm(at.confirm_delete_message)) return;
+  const atRef = useRef(at);
+  useEffect(() => { atRef.current = at; }, [at]);
+
+  const deleteMessage = useCallback(async (item: ConvItem) => {
+    const tok = tokenRef.current;
+    if (!tok) return;
+    if (!window.confirm(atRef.current.confirm_delete_message)) return;
     try {
       if (item.kind === "admin-direct") {
-        await chatApi.adminDeleteMessage(item.id, token);
+        await chatApi.adminDeleteMessage(item.id, tok);
         setAdminMsgs(prev => prev.filter(m => m.id !== item.id));
       } else {
-        await chatApi.adminDeleteUserMessage(item.id, token);
+        await chatApi.adminDeleteUserMessage(item.id, tok);
         setUserMsgs(prev => prev.filter(m => m.id !== item.id));
       }
     } catch { /* silent */ }
-  };
+  }, []);
 
-  const deleteUser = async (user: AdminUser, e: React.MouseEvent) => {
+  const deleteUser = useCallback(async (user: AdminUser, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!token) return;
-    if (!window.confirm(at.confirm_delete_user)) return;
+    const tok = tokenRef.current;
+    if (!tok) return;
+    if (!window.confirm(atRef.current.confirm_delete_user)) return;
     try {
-      await chatApi.adminDeleteUser(user.id, token);
+      await chatApi.adminDeleteUser(user.id, tok);
       setUsers(prev => prev.filter(u => u.id !== user.id));
-      if (selectedUser?.id === user.id) {
+      if (selectedUserRef.current?.id === user.id) {
         setSelectedUser(null);
         setUserMsgs([]);
         setAdminMsgs([]);
         setMobileView("list");
       }
     } catch { /* silent */ }
-  };
+  }, []);
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
@@ -431,9 +604,30 @@ export default function AdminPage() {
           cursor: pointer;
           display: flex;
           align-items: center;
+          justify-content: center;
           line-height: 0;
+          flex-shrink: 0;
+          width: 22px;
+          height: 22px;
+          box-sizing: border-box;
         }
         .admin-msg-action-btn:hover.danger { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+        /* Edit-mode Check/Cancel tugmalari — tor ekranlarda (<390px) siqilib
+           ikonka ko'rinmay qolmasligi uchun flex-shrink: 0 va qat'iy o'lcham */
+        .edit-mode-btn {
+          flex-shrink: 0;
+          width: 32px;
+          height: 32px;
+          min-width: 32px;
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          padding: 0;
+        }
 
         .load-more-indicator {
           display: flex;
@@ -498,54 +692,16 @@ export default function AdminPage() {
                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>{at.no_users}</p>
               </div>
             ) : (
-              filteredUsers.map(u => {
-                const isActive = selectedUser?.id === u.id;
-                return (
-                  <div
-                    key={u.id}
-                    onClick={() => loadConversation(u)}
-                    className="admin-user-row"
-                    style={{
-                      padding: "11px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
-                      background: isActive ? "var(--accent-dim)" : "transparent",
-                      borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    <div style={{ position: "relative", flexShrink: 0 }}>
-                      <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "1rem", color: "#fff", fontFamily: "Sora, sans-serif" }}>
-                        {u.name[0]?.toUpperCase()}
-                      </div>
-                      {u.unreadCount > 0 && (
-                        <span style={{ position: "absolute", top: -3, right: -3, background: "#ef4444", color: "#fff", borderRadius: "50%", minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 700, border: "2px solid var(--bg)", padding: "0 3px" }}>
-                          {u.unreadCount > 9 ? "9+" : u.unreadCount}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <p style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</p>
-                        {u.lastMessage && (
-                          <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", flexShrink: 0, marginLeft: 6 }}>
-                            {fmt(u.lastMessage.createdAt)}
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {u.lastMessage ? u.lastMessage.content : u.email}
-                      </p>
-                    </div>
-                    <button
-                      className="admin-user-delete-btn"
-                      onClick={e => deleteUser(u, e)}
-                      title={at.delete_user}
-                      style={{ flexShrink: 0, background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 6, borderRadius: 8, display: "flex", alignItems: "center", opacity: 0, transition: "opacity 0.15s" }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                );
-              })
+              filteredUsers.map(u => (
+                <UserRow
+                  key={u.id}
+                  user={u}
+                  isActive={selectedUser?.id === u.id}
+                  deleteUserLabel={at.delete_user}
+                  onSelect={loadConversation}
+                  onDelete={deleteUser}
+                />
+              ))
             )}
           </div>
         </div>
@@ -598,86 +754,24 @@ export default function AdminPage() {
                       </div>
                     )}
                     {timeline.map((item, idx) => {
-                    const prev = timeline[idx - 1];
-                    const showDate = !prev || new Date(item.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
-
-                    return (
-                      <div key={item.id}>
-                        {/* Date separator */}
-                        {showDate && (
-                          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "10px 0 14px" }}>
-                            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-                            <span style={{ fontSize: "0.63rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", padding: "2px 10px", background: "var(--bg-secondary)", borderRadius: 20, border: "1px solid var(--border)" }}>
-                              {new Date(item.createdAt).toLocaleDateString([], { day: "2-digit", month: "long", year: "numeric" })}
-                            </span>
-                            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-                          </div>
-                        )}
-
-                        {/* Admin message — right */}
-                        {item.kind === "admin-direct" && (
-                          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
-                            <div style={{ maxWidth: "78%" }}>
-                              {editingMsgId === item.id ? (
-                                <div style={{ display: "flex", gap: 6 }}>
-                                  <input
-                                    autoFocus value={editValue}
-                                    onChange={e => setEditValue(e.target.value)}
-                                    onKeyDown={e => { if (e.key === "Enter") saveEditMsg(); if (e.key === "Escape") setEditingMsgId(null); }}
-                                    style={{ flex: 1, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "0.88rem", outline: "none", fontFamily: "Sora, sans-serif" }}
-                                  />
-                                  <button onClick={saveEditMsg} style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><Check size={14} /></button>
-                                  <button onClick={() => setEditingMsgId(null)} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <div className="admin-msg-bubble">
-                                  <div className="admin-msg-actions" style={{ right: 4 }}>
-                                    <button className="admin-msg-action-btn" title={at.edit} onClick={() => startEditMsg(item)}><Pencil size={11} /></button>
-                                    <button className="admin-msg-action-btn danger" title={at.delete} onClick={() => deleteMessage(item)}><Trash2 size={11} /></button>
-                                  </div>
-                                  <div style={{ padding: "9px 13px", borderRadius: "16px 16px 4px 16px", background: "var(--accent)", fontSize: "0.88rem", color: "#fff", lineHeight: 1.55 }}>
-                                    {item.content}
-                                    {item.edited && <span style={{ fontSize: "0.62rem", opacity: 0.8, marginLeft: 6 }}>({at.edit.toLowerCase()})</span>}
-                                  </div>
-                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 3, paddingRight: 4 }}>
-                                    <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
-                                    {item.readAt
-                                      ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                                      : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                                    }
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* User message — left */}
-                        {item.kind === "user-msg" && (
-                          <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 4 }}>
-                            <div style={{ maxWidth: "78%" }}>
-                              <div className="admin-msg-bubble">
-                                <div className="admin-msg-actions" style={{ left: 4 }}>
-                                  <button className="admin-msg-action-btn danger" title={at.delete} onClick={() => deleteMessage(item)}><Trash2 size={11} /></button>
-                                </div>
-                                <div style={{ padding: "9px 13px", borderRadius: "16px 16px 16px 4px", background: "var(--bg-card)", border: "1px solid var(--border)", fontSize: "0.88rem", color: "var(--text)", lineHeight: 1.55 }}>
-                                  {item.content}
-                                  {item.edited && <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", marginLeft: 6 }}>(tahrirlangan)</span>}
-                                </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3, paddingLeft: 4 }}>
-                                  <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
-                                  {item.readByAdmin
-                                    ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                                    : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      const prev = timeline[idx - 1];
+                      const showDate = !prev || new Date(item.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
+                      return (
+                        <MessageBubble
+                          key={item.id}
+                          item={item}
+                          showDate={showDate}
+                          isEditing={editingMsgId === item.id}
+                          editValue={editingMsgId === item.id ? editValue : ""}
+                          at={at}
+                          onEditValueChange={setEditValue}
+                          onSaveEdit={saveEditMsg}
+                          onCancelEdit={cancelEditMsg}
+                          onStartEdit={startEditMsg}
+                          onDelete={deleteMessage}
+                        />
+                      );
+                    })}
                   </>
                 )}
                 <div ref={bottomRef} style={{ height: 4 }} />

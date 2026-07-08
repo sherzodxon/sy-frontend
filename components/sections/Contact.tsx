@@ -7,12 +7,16 @@ import FadeIn from "@/components/ui/FadeIn";
 import { useAuth } from "@/hooks/useAuth";
 import { chatApi } from "@/services/api";
 import { useEffect, useState } from "react";
+import GitHubIcon from "../ui/GithubIcon";
+import TelegramIcon from "../ui/TelegramIcon";
+import LinkedInIcon from "../ui/LinkedinIcon";
+import GmailIcon from "../ui/GmailIcon";
 
 const iconMap: Record<string, React.ReactNode> = {
-  Github: <GitFork size={20} />,
-  Send: <Send size={20} />,
-  Linkedin: <LinkIcon size={20} />,
-  Mail: <Mail size={20} />,
+  Github: <GitHubIcon size={20} />,
+  Send: <TelegramIcon size={20} />,
+  Linkedin: <LinkedInIcon size={20} />,
+  Mail: <GmailIcon size={20} />,
 };
 
 export default function Contact() {
