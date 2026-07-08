@@ -1,189 +1,30 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, memo } from "react";
-import {
-  Loader2, Lock, ShieldCheck, RefreshCw, LogOut, ArrowRight,
-  Send, Check, CheckCheck, Search, MessageSquare, Users, ArrowLeft,
-  Pencil, Trash2, X, ChevronUp,
-} from "lucide-react";
-import { useLang } from "@/hooks/useLang";
-import { chatApi, AdminUser, UserMessage, AdminDirectMessage } from "@/services/api";
 
-type ConvItem =
-  | (UserMessage & { kind: "user-msg" })
-  | (AdminDirectMessage & { kind: "admin-direct" });
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  Lock,
+  MessageSquare,
+  ShieldCheck,
+} from "lucide-react";
+import AdminSidebar from "@/components/chat/AdminSidebar";
+import DateSeparator from "@/components/chat/DateSeparator";
+import MessageBubble from "@/components/chat/MessageBubble";
+import MessageComposer from "@/components/chat/MessageComposer";
+import {
+  buildTimeline,
+  ConversationItem,
+  formatDate,
+  formatFullTime,
+  isSameDay,
+} from "@/components/chat/chatUtils";
+import { useLang } from "@/hooks/useLang";
+import { AdminDirectMessage, AdminUser, chatApi, UserMessage } from "@/services/api";
+import styles from "./AdminPage.module.scss";
 
 const STORAGE_KEY = "admin_token";
-
-function fmt(d: string) {
-  const date = new Date(d);
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  return isToday
-    ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    : date.toLocaleDateString([], { day: "2-digit", month: "short" });
-}
-
-function fmtFull(d: string) {
-  return new Date(d).toLocaleString([], {
-    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-  });
-}
-
-function buildTimeline(msgs: UserMessage[], adminMsgs: AdminDirectMessage[]): ConvItem[] {
-  const all: ConvItem[] = [
-    ...msgs.map(m => ({ ...m, kind: "user-msg" as const })),
-    ...adminMsgs.map(m => ({ ...m, kind: "admin-direct" as const })),
-  ];
-  return all.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-}
-
-const UserRow = memo(function UserRow({
-  user, isActive, deleteUserLabel, onSelect, onDelete,
-}: {
-  user: AdminUser;
-  isActive: boolean;
-  deleteUserLabel: string;
-  onSelect: (user: AdminUser) => void;
-  onDelete: (user: AdminUser, e: React.MouseEvent) => void;
-}) {
-  return (
-    <div
-      onClick={() => onSelect(user)}
-      className="admin-user-row"
-      style={{
-        padding: "11px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
-        background: isActive ? "var(--accent-dim)" : "transparent",
-        borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
-        transition: "all 0.15s",
-      }}
-    >
-      <div style={{ position: "relative", flexShrink: 0 }}>
-        <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "1rem", color: "#fff", fontFamily: "Sora, sans-serif" }}>
-          {user.name[0]?.toUpperCase()}
-        </div>
-        {user.unreadCount > 0 && (
-          <span style={{ position: "absolute", top: -3, right: -3, background: "#ef4444", color: "#fff", borderRadius: "50%", minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 700, border: "2px solid var(--bg)", padding: "0 3px" }}>
-            {user.unreadCount > 9 ? "9+" : user.unreadCount}
-          </span>
-        )}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <p style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</p>
-          {user.lastMessage && (
-            <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", flexShrink: 0, marginLeft: 6 }}>
-              {fmt(user.lastMessage.createdAt)}
-            </span>
-          )}
-        </div>
-        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {user.lastMessage ? user.lastMessage.content : user.email}
-        </p>
-      </div>
-      <button
-        className="admin-user-delete-btn"
-        onClick={e => onDelete(user, e)}
-        title={deleteUserLabel}
-        style={{ flexShrink: 0, background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 6, borderRadius: 8, display: "flex", alignItems: "center", transition: "opacity 0.15s" }}
-      >
-        <Trash2 color="#E86048" size={14} />
-      </button>
-    </div>
-  );
-});
-
-const MessageBubble = memo(function MessageBubble({
-  item, showDate, isEditing, editValue, at,
-  onEditValueChange, onSaveEdit, onCancelEdit, onStartEdit, onDelete,
-}: {
-  item: ConvItem;
-  showDate: boolean;
-  isEditing: boolean;
-  editValue: string;
-  at: any;
-  onEditValueChange: (v: string) => void;
-  onSaveEdit: () => void;
-  onCancelEdit: () => void;
-  onStartEdit: (msg: AdminDirectMessage) => void;
-  onDelete: (item: ConvItem) => void;
-}) {
-  return (
-    <div>
-      {/* Date separator */}
-      {showDate && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "10px 0 14px" }}>
-          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          <span style={{ fontSize: "0.63rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", padding: "2px 10px", background: "var(--bg-secondary)", borderRadius: 20, border: "1px solid var(--border)" }}>
-            {new Date(item.createdAt).toLocaleDateString([], { day: "2-digit", month: "long", year: "numeric" })}
-          </span>
-          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-        </div>
-      )}
-
-      {/* Admin message — right */}
-      {item.kind === "admin-direct" && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
-          <div style={{ maxWidth: "78%", minWidth: 0 }}>
-            {isEditing ? (
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <input
-                  autoFocus value={editValue}
-                  onChange={e => onEditValueChange(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") onSaveEdit(); if (e.key === "Escape") onCancelEdit(); }}
-                  style={{ flex: "1 1 auto", minWidth: 0, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "0.88rem", outline: "none", fontFamily: "Sora, sans-serif" }}
-                />
-                <button onClick={onSaveEdit} className="edit-mode-btn" style={{ background: "var(--accent)", border: "none", color: "#fff" }}><Check size={14} /></button>
-                <button onClick={onCancelEdit} className="edit-mode-btn" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)" }}><X size={14} /></button>
-              </div>
-            ) : (
-              <div className="admin-msg-bubble">
-                <div className="admin-msg-actions" style={{ right: 4 }}>
-                  <button className="admin-msg-action-btn" title={at.edit} onClick={() => onStartEdit(item)}><Pencil size={11} /></button>
-                  <button className="admin-msg-action-btn danger" title={at.delete} onClick={() => onDelete(item)}><Trash2 size={11} /></button>
-                </div>
-                <div style={{ padding: "9px 13px", borderRadius: "16px 16px 4px 16px", background: "var(--accent)", fontSize: "0.88rem", color: "#fff", lineHeight: 1.55 }}>
-                  {item.content}
-                  {item.edited && <span style={{ fontSize: "0.62rem", opacity: 0.8, marginLeft: 6 }}>({at.edit.toLowerCase()})</span>}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 3, paddingRight: 4 }}>
-                  <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
-                  {item.readAt
-                    ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                    : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                  }
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* User message — left */}
-      {item.kind === "user-msg" && (
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 4 }}>
-          <div style={{ maxWidth: "78%" }}>
-            <div className="admin-msg-bubble">
-              <div className="admin-msg-actions" style={{ left: 4 }}>
-                <button className="admin-msg-action-btn danger" title={at.delete} onClick={() => onDelete(item)}><Trash2 size={11} /></button>
-              </div>
-              <div style={{ padding: "9px 13px", borderRadius: "16px 16px 16px 4px", background: "var(--bg-card)", border: "1px solid var(--border)", fontSize: "0.88rem", color: "var(--text)", lineHeight: 1.55 }}>
-                {item.content}
-                {item.edited && <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", marginLeft: 6 }}>(tahrirlangan)</span>}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3, paddingLeft: 4 }}>
-                <span style={{ fontSize: "0.58rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmtFull(item.createdAt)}</span>
-                {item.readByAdmin
-                  ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                  : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-});
 
 export default function AdminPage() {
   const { t } = useLang();
@@ -193,7 +34,6 @@ export default function AdminPage() {
   const [pwd, setPwd] = useState("");
   const [pwdErr, setPwdErr] = useState("");
   const [pwdLoading, setPwdLoading] = useState(false);
-
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -201,52 +41,52 @@ export default function AdminPage() {
   const [adminMsgs, setAdminMsgs] = useState<AdminDirectMessage[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
-
-  // Pagination — Telegram uslubidagi bosqichma-bosqich yuklash
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-
-  // Adminning o'z xabarini tahrirlash
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
-
-  // Klaviaturadan yozishda butun xabarlar/user ro'yxati qayta render bo'lmasligi uchun
-  // callback'lar state'ga emas, ref'larga tayanadi (React.memo optimallashuvi saqlanadi)
   const editingMsgIdRef = useRef<string | null>(null);
   const editValueRef = useRef("");
   const tokenRef = useRef<string | null>(null);
   const selectedUserRef = useRef<AdminUser | null>(null);
+  const atRef = useRef(at);
+
   useEffect(() => { editingMsgIdRef.current = editingMsgId; }, [editingMsgId]);
   useEffect(() => { editValueRef.current = editValue; }, [editValue]);
   useEffect(() => { tokenRef.current = token; }, [token]);
   useEffect(() => { selectedUserRef.current = selectedUser; }, [selectedUser]);
-
-  // ── Auth ──────────────────────────────────────────────────────────────────
+  useEffect(() => { atRef.current = at; }, [at]);
 
   useEffect(() => {
     const saved = sessionStorage.getItem(STORAGE_KEY);
-    if (saved) setToken(saved);
+    if (saved) queueMicrotask(() => setToken(saved));
   }, []);
 
-  useEffect(() => { if (token) loadUsers(); }, [token]);
+  const loadUsers = useCallback(async () => {
+    if (!tokenRef.current) return;
+    setLoadingUsers(true);
+    try {
+      setUsers(await chatApi.adminGetUsers(tokenRef.current));
+    } catch {
+      // Silent user list refresh failure.
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
 
-  // Yangi xabar kelganda pastga scroll — silent refresh paytida scroll pozitsiyasini buzmaslik uchun
+  useEffect(() => { if (token) loadUsers(); }, [token, loadUsers]);
+
   useEffect(() => {
     const total = userMsgs.length + adminMsgs.length;
-    if (total > prevCountRef.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (total > prevCountRef.current) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     prevCountRef.current = total;
   }, [userMsgs, adminMsgs]);
 
@@ -256,43 +96,37 @@ export default function AdminPage() {
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
       }
     };
-    if (typeof window !== "undefined" && "visualViewport" in window) {
-      window.visualViewport?.addEventListener("resize", handleResize);
-      return () => window.visualViewport?.removeEventListener("resize", handleResize);
-    }
+    window.visualViewport?.addEventListener("resize", handleResize);
+    return () => window.visualViewport?.removeEventListener("resize", handleResize);
   }, [mobileView]);
 
   const handleLogin = async () => {
     if (!pwd.trim()) return;
-    setPwdLoading(true); setPwdErr("");
+    setPwdLoading(true);
+    setPwdErr("");
     try {
-      const BASE = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${BASE}/auth/admin-login`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/admin-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: pwd }),
       });
       const data = await res.json();
-      if (!res.ok) { setPwdErr(data.message || "Noto'g'ri parol"); return; }
+      if (!res.ok) {
+        setPwdErr(data.message || "Noto'g'ri parol");
+        return;
+      }
       sessionStorage.setItem(STORAGE_KEY, data.token);
       setToken(data.token);
-    } catch { setPwdErr("Server bilan bog'lanishda xato"); }
-    finally { setPwdLoading(false); }
+    } catch {
+      setPwdErr("Server bilan bog'lanishda xato");
+    } finally {
+      setPwdLoading(false);
+    }
   };
 
-  // ── Data ──────────────────────────────────────────────────────────────────
-
-  const loadUsers = useCallback(async () => {
-    if (!token) return;
-    setLoadingUsers(true);
-    try {
-      const data = await chatApi.adminGetUsers(token);
-      setUsers(data);
-    } catch { /* silent */ } finally { setLoadingUsers(false); }
-  }, [token]);
-
   const loadConversation = useCallback(async (user: AdminUser) => {
-    if (!token) return;
+    const tok = tokenRef.current;
+    if (!tok) return;
     setSelectedUser(user);
     setLoadingMsgs(true);
     setUserMsgs([]);
@@ -301,87 +135,81 @@ export default function AdminPage() {
     setNextCursor(null);
     setMobileView("chat");
     prevCountRef.current = 0;
+
     try {
-      // Faqat eng so'nggi 20 ta xabar — qolganlari yuqoriga scroll qilinganda yuklanadi
-      const data = await chatApi.adminGetConversation(user.id, token);
+      const data = await chatApi.adminGetConversation(user.id, tok);
       setUserMsgs(data.messages);
       setAdminMsgs(data.adminMessages);
       setHasMore(data.hasMore);
       setNextCursor(data.nextCursor);
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, unreadCount: 0 } : u));
-    } catch { /* silent */ } finally { setLoadingMsgs(false); }
-  }, [token]);
+      setUsers(prev => prev.map(item => item.id === user.id ? { ...item, unreadCount: 0 } : item));
+    } catch {
+      // Silent conversation load failure.
+    } finally {
+      setLoadingMsgs(false);
+    }
+  }, []);
 
-  // Yuqoriga scroll qilinganda yana +20 ta eskiroq xabar yuklash (scroll pozitsiyasi saqlanadi)
   const loadOlderMessages = useCallback(async () => {
-    if (!token || !selectedUser || !hasMore || loadingMore || !nextCursor) return;
+    const tok = tokenRef.current;
+    const user = selectedUserRef.current;
+    if (!tok || !user || !hasMore || loadingMore || !nextCursor) return;
     setLoadingMore(true);
     const el = chatScrollRef.current;
     const prevScrollHeight = el?.scrollHeight ?? 0;
     const prevScrollTop = el?.scrollTop ?? 0;
+
     try {
-      const data = await chatApi.adminGetConversation(selectedUser.id, token, nextCursor);
+      const data = await chatApi.adminGetConversation(user.id, tok, nextCursor);
       const addedCount = data.messages.length + data.adminMessages.length;
       setUserMsgs(prev => {
-        const existing = new Set(prev.map(m => m.id));
-        return [...data.messages.filter(m => !existing.has(m.id)), ...prev];
+        const existing = new Set(prev.map(message => message.id));
+        return [...data.messages.filter(message => !existing.has(message.id)), ...prev];
       });
       setAdminMsgs(prev => {
-        const existing = new Set(prev.map(m => m.id));
-        return [...data.adminMessages.filter(m => !existing.has(m.id)), ...prev];
+        const existing = new Set(prev.map(message => message.id));
+        return [...data.adminMessages.filter(message => !existing.has(message.id)), ...prev];
       });
       setHasMore(data.hasMore);
       setNextCursor(data.nextCursor);
-      // Eski xabarlar prepend qilingani uchun pastga avto-scroll bo'lmasligi kerak
       prevCountRef.current += addedCount;
       requestAnimationFrame(() => {
         if (el) el.scrollTop = el.scrollHeight - prevScrollHeight + prevScrollTop;
       });
-    } catch { /* silent */ } finally { setLoadingMore(false); }
-  }, [token, selectedUser, hasMore, loadingMore, nextCursor]);
+    } catch {
+      // Silent pagination failure.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, nextCursor]);
 
-  const handleMessagesScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (e.currentTarget.scrollTop < 80) loadOlderMessages();
-  };
-
-  // Fon rejimida (loading ko'rsatmasdan) joriy oynani yangilash — faqat hozir yuklangan qismni
   const loadConversationSilent = useCallback(async (userId: string) => {
-    if (!token) return;
+    const tok = tokenRef.current;
+    if (!tok) return;
     try {
       const currentTotal = userMsgs.length + adminMsgs.length;
-      const limit = Math.max(currentTotal, 20);
-      const data = await chatApi.adminGetConversation(userId, token, undefined, limit);
+      const data = await chatApi.adminGetConversation(userId, tok, undefined, Math.max(currentTotal, 20));
       setUserMsgs(data.messages);
       setAdminMsgs(data.adminMessages);
       setHasMore(data.hasMore);
       setNextCursor(data.nextCursor);
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, unreadCount: 0 } : u));
-    } catch { /* silent */ }
-  }, [token, userMsgs.length, adminMsgs.length]);
+      setUsers(prev => prev.map(user => user.id === userId ? { ...user, unreadCount: 0 } : user));
+    } catch {
+      // Silent conversation refresh failure.
+    }
+  }, [userMsgs.length, adminMsgs.length]);
 
-  // Sidebar — har 30 sekundda foydalanuvchilar ro'yxati va unread hisoblarini yangilash
   useEffect(() => {
     if (!token) return;
     const timer = setInterval(loadUsers, 30000);
     return () => clearInterval(timer);
   }, [token, loadUsers]);
 
-  // Suhbat oynasi — har 10 sekundda yangi xabarlarni jim (silent) yuklash
   useEffect(() => {
     if (!token || !selectedUser) return;
     const timer = setInterval(() => loadConversationSilent(selectedUser.id), 10000);
     return () => clearInterval(timer);
   }, [token, selectedUser, loadConversationSilent]);
-
-  const handleBack = () => {
-    setMobileView("list");
-    setSelectedUser(null);
-    setUserMsgs([]);
-    setAdminMsgs([]);
-    prevCountRef.current = 0;
-  };
-
-  // ── Send — faqat adminMessage ─────────────────────────────────────────────
 
   const sendMessage = useCallback(async () => {
     const tok = tokenRef.current;
@@ -393,419 +221,239 @@ export default function AdminPage() {
       setAdminMsgs(prev => [...prev, msg]);
       setInput("");
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-    } catch { /* silent */ } finally { setSending(false); }
+    } catch {
+      // Silent send failure.
+    } finally {
+      setSending(false);
+    }
   }, [input, sending]);
-
-  // ── Edit (faqat adminning o'z yuborgan mustaqil xabarlari) ──────────────────
-  // deps: [] — barqaror identity, MessageBubble'lardagi React.memo buzilmaydi
-
-  const startEditMsg = useCallback((msg: AdminDirectMessage) => {
-    setEditingMsgId(msg.id);
-    setEditValue(msg.content);
-  }, []);
-
-  const cancelEditMsg = useCallback(() => setEditingMsgId(null), []);
 
   const saveEditMsg = useCallback(async () => {
     const id = editingMsgIdRef.current;
     const value = editValueRef.current;
     const tok = tokenRef.current;
-    if (!id || !value.trim() || !tok) { setEditingMsgId(null); return; }
+    if (!id || !value.trim() || !tok) {
+      setEditingMsgId(null);
+      return;
+    }
     try {
       const updated = await chatApi.adminEditMessage(id, value.trim(), tok);
-      setAdminMsgs(prev => prev.map(m => m.id === id ? { ...m, ...updated } : m));
-    } catch { /* silent */ } finally { setEditingMsgId(null); }
+      setAdminMsgs(prev => prev.map(message => message.id === id ? { ...message, ...updated } : message));
+    } catch {
+      // Silent edit failure.
+    } finally {
+      setEditingMsgId(null);
+    }
   }, []);
 
-  // ── Delete ───────────────────────────────────────────────────────────────
-  // deps: [] — token/at/selectedUser ref orqali o'qiladi, identity o'zgarmaydi
-
-  const atRef = useRef(at);
-  useEffect(() => { atRef.current = at; }, [at]);
-
-  const deleteMessage = useCallback(async (item: ConvItem) => {
+  const deleteMessage = useCallback(async (item: ConversationItem) => {
     const tok = tokenRef.current;
-    if (!tok) return;
-    if (!window.confirm(atRef.current.confirm_delete_message)) return;
+    if (!tok || !window.confirm(atRef.current.confirm_delete_message)) return;
     try {
       if (item.kind === "admin-direct") {
         await chatApi.adminDeleteMessage(item.id, tok);
-        setAdminMsgs(prev => prev.filter(m => m.id !== item.id));
+        setAdminMsgs(prev => prev.filter(message => message.id !== item.id));
       } else {
         await chatApi.adminDeleteUserMessage(item.id, tok);
-        setUserMsgs(prev => prev.filter(m => m.id !== item.id));
+        setUserMsgs(prev => prev.filter(message => message.id !== item.id));
       }
-    } catch { /* silent */ }
+    } catch {
+      // Silent delete failure.
+    }
   }, []);
 
-  const deleteUser = useCallback(async (user: AdminUser, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const deleteUser = useCallback(async (user: AdminUser, event: React.MouseEvent) => {
+    event.stopPropagation();
     const tok = tokenRef.current;
-    if (!tok) return;
-    if (!window.confirm(atRef.current.confirm_delete_user)) return;
+    if (!tok || !window.confirm(atRef.current.confirm_delete_user)) return;
     try {
       await chatApi.adminDeleteUser(user.id, tok);
-      setUsers(prev => prev.filter(u => u.id !== user.id));
+      setUsers(prev => prev.filter(item => item.id !== user.id));
       if (selectedUserRef.current?.id === user.id) {
         setSelectedUser(null);
         setUserMsgs([]);
         setAdminMsgs([]);
         setMobileView("list");
       }
-    } catch { /* silent */ }
+    } catch {
+      // Silent delete failure.
+    }
   }, []);
 
-  // ── Derived ───────────────────────────────────────────────────────────────
+  const handleLogout = () => {
+    sessionStorage.removeItem(STORAGE_KEY);
+    setToken(null);
+  };
+
+  const handleBack = () => {
+    setMobileView("list");
+    setSelectedUser(null);
+    setUserMsgs([]);
+    setAdminMsgs([]);
+    prevCountRef.current = 0;
+  };
 
   const timeline = buildTimeline(userMsgs, adminMsgs);
-  const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(search.toLowerCase()) ||
+    user.email.toLowerCase().includes(search.toLowerCase())
   );
-  const totalUnread = users.reduce((s, u) => s + u.unreadCount, 0);
-
-  // ── Login screen ──────────────────────────────────────────────────────────
+  const totalUnread = users.reduce((sum, user) => sum + user.unreadCount, 0);
 
   if (!token) {
     return (
-      <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", padding: "20px 16px" }}>
-        <div style={{ width: "100%", maxWidth: 400 }}>
-          <div className="card" style={{ borderRadius: 24, overflow: "hidden" }}>
-            <div style={{ padding: "28px 28px 24px", background: "linear-gradient(135deg, var(--accent-dim), transparent 80%)", borderBottom: "1px solid var(--border)", textAlign: "center" }}>
-              <div style={{ width: 52, height: 52, borderRadius: 14, margin: "0 auto 16px", background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <ShieldCheck size={24} style={{ color: "#fff" }} />
+      <div className={styles.loginShell}>
+        <div className={styles.loginCardWrap}>
+          <div className={`card ${styles.loginCard}`}>
+            <div className={styles.loginHead}>
+              <div className={styles.loginIcon}>
+                <ShieldCheck size={24} />
               </div>
-              <h1 style={{ fontWeight: 700, fontSize: "1.2rem", color: "var(--text)", margin: "0 0 4px", letterSpacing: "-0.03em" }}>{at.login_title}</h1>
-              <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", margin: 0, fontFamily: "JetBrains Mono, monospace" }}>yarmatxonov.uz / admin</p>
+              <h1 className={styles.loginTitle}>{at.login_title}</h1>
+              <p className={styles.mono}>yarmatxonov.uz / admin</p>
             </div>
-            <div style={{ padding: "28px 28px 32px" }}>
-              <p style={{ fontSize: "0.72rem", fontWeight: 600, marginBottom: 8, color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                {at.password_label}
-              </p>
-              <div style={{ position: "relative" }}>
-                <Lock size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+            <div className={styles.loginBody}>
+              <p className={styles.label}>{at.password_label}</p>
+              <div className={styles.field}>
+                <Lock className={styles.fieldIcon} size={15} />
                 <input
-                  type="password" placeholder="••••••••" value={pwd} autoFocus
-                  onChange={e => setPwd(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleLogin()}
-                  style={{ width: "100%", padding: "13px 14px 13px 44px", borderRadius: 12, fontSize: "0.9rem", fontFamily: "Sora, sans-serif", background: "var(--bg-secondary)", color: "var(--text)", outline: "none", boxSizing: "border-box", border: pwdErr ? "1.5px solid #ef4444" : "1.5px solid var(--border)", transition: "border-color 0.2s" }}
+                  className={`${styles.input} ${pwdErr ? styles.inputError : ""}`}
+                  type="password"
+                  placeholder="••••••••"
+                  value={pwd}
+                  autoFocus
+                  onChange={event => setPwd(event.target.value)}
+                  onKeyDown={event => event.key === "Enter" && handleLogin()}
                 />
               </div>
-              {pwdErr && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 10, marginTop: 12, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)" }}>
-                  <span>⚠️</span>
-                  <p style={{ fontSize: "0.8rem", color: "#ef4444", margin: 0 }}>{pwdErr}</p>
-                </div>
-              )}
+              {pwdErr && <div className={styles.error}><span>!</span><p>{pwdErr}</p></div>}
               <button
+                className={styles.loginButton}
                 onClick={handleLogin}
                 disabled={pwdLoading || !pwd.trim()}
-                style={{ width: "100%", marginTop: 16, padding: "13px 20px", borderRadius: 13, border: "none", background: "var(--accent)", color: "#fff", fontWeight: 700, fontSize: "0.92rem", fontFamily: "Sora, sans-serif", cursor: pwdLoading || !pwd.trim() ? "not-allowed" : "pointer", opacity: pwdLoading || !pwd.trim() ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
               >
-                {pwdLoading ? <Loader2 size={17} style={{ animation: "spin 1s linear infinite" }} /> : <ArrowRight size={17} />}
+                {pwdLoading ? <Loader2 className={styles.spin} size={17} /> : <ArrowRight size={17} />}
                 {at.login_btn}
               </button>
             </div>
           </div>
         </div>
-        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
       </div>
     );
   }
 
-  // ── Main ──────────────────────────────────────────────────────────────────
-
   return (
-    <>
-      <style>{`
-        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    <div className={styles.wrapper}>
+      <AdminSidebar
+        users={users}
+        filteredUsers={filteredUsers}
+        selectedUserId={selectedUser?.id}
+        search={search}
+        totalUnread={totalUnread}
+        loadingUsers={loadingUsers}
+        labels={at}
+        hidden={mobileView === "chat"}
+        onSearchChange={setSearch}
+        onRefresh={loadUsers}
+        onLogout={handleLogout}
+        onSelect={loadConversation}
+        onDelete={deleteUser}
+      />
 
-        .admin-wrapper {
-          display: flex;
-          height: 100dvh;
-          overflow: hidden;
-          background: var(--bg);
-        }
-        .admin-sidebar {
-          width: 320px;
-          flex-shrink: 0;
-          display: flex;
-          flex-direction: column;
-          border-right: 1px solid var(--border);
-          height: 100dvh;
-          overflow: hidden;
-        }
-        .admin-chat-panel {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          height: 100dvh;
-          overflow: hidden;
-        }
-        .messages-scroll {
-          flex: 1;
-          overflow-y: auto;
-          padding: 16px 16px 8px;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          -webkit-overflow-scrolling: touch;
-        }
-        .reply-bar {
-          padding: 10px 12px;
-          padding-bottom: max(10px, env(safe-area-inset-bottom));
-          border-top: 1px solid var(--border);
-          background: var(--bg-card);
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-
-        @media (max-width: 768px) {
-          .admin-wrapper { position: relative; overflow: hidden; }
-          .admin-sidebar {
-            position: absolute; inset: 0; width: 100%; z-index: 10;
-            transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-          }
-          .admin-sidebar.hidden-mobile { transform: translateX(-100%); pointer-events: none; }
-          .admin-chat-panel {
-            position: absolute; inset: 0; width: 100%; z-index: 20;
-            transform: translateX(100%);
-            transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-          }
-          .admin-chat-panel.visible-mobile { transform: translateX(0); }
-        }
-        @media (min-width: 769px) {
-          .back-btn-mobile { display: none !important; }
-        }
-        @media (max-width: 480px) {
-          .hide-on-mobile { display: none; }
-        }
-
-        .admin-user-row:hover .admin-user-delete-btn { opacity: 1; }
-        .admin-user-delete-btn:hover { background: rgba(239,68,68,0.12) !important; color: #ef4444 !important; }
-
-        .admin-msg-bubble { position: relative; }
-        .admin-msg-actions {
-          position: absolute;
-          top: -11px;
-          display: flex;
-          gap: 3px;
-          opacity: 0;
-          transition: opacity 0.15s;
-        }
-        .admin-msg-bubble:hover .admin-msg-actions { opacity: 1; }
-        .admin-msg-action-btn {
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          color: var(--text-muted);
-          border-radius: 6px;
-          padding: 4px 5px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 0;
-          flex-shrink: 0;
-          width: 22px;
-          height: 22px;
-          box-sizing: border-box;
-        }
-        .admin-msg-action-btn:hover.danger { color: #ef4444; border-color: rgba(239,68,68,0.3); }
-
-        /* Edit-mode Check/Cancel tugmalari — tor ekranlarda (<390px) siqilib
-           ikonka ko'rinmay qolmasligi uchun flex-shrink: 0 va qat'iy o'lcham */
-        .edit-mode-btn {
-          flex-shrink: 0;
-          width: 32px;
-          height: 32px;
-          min-width: 32px;
-          border-radius: 8px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-sizing: border-box;
-          padding: 0;
-        }
-
-        .load-more-indicator {
-          display: flex;
-          justify-content: center;
-          padding: 10px 0 14px;
-          font-size: 0.72rem;
-          color: var(--text-muted);
-          font-family: "JetBrains Mono", monospace;
-        }
-      `}</style>
-
-      <div className="admin-wrapper">
-
-        {/* ── Sidebar ── */}
-        <div className={`admin-sidebar${mobileView === "chat" ? " hidden-mobile" : ""}`}>
-          <div style={{ padding: "0 16px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", background: "var(--bg-card)", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--accent-dim)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <ShieldCheck size={15} style={{ color: "var(--accent)" }} />
-              </div>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: "0.88rem", color: "var(--text)", margin: 0, letterSpacing: "-0.02em" }}>{at.title}</p>
-                <p style={{ fontSize: "0.62rem", color: "var(--text-muted)", margin: 0, fontFamily: "JetBrains Mono, monospace" }}>
-                  {users.length} {at.users?.toLowerCase()}
-                  {totalUnread > 0 && <span style={{ color: "#ef4444", marginLeft: 5 }}>· {totalUnread} {at.unread}</span>}
-                </p>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={loadUsers} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "6px 9px", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                <RefreshCw size={13} />
+      <section className={`${styles.chatPanel} ${mobileView === "chat" ? styles.chatPanelVisible : ""}`}>
+        {!selectedUser ? (
+          <div className={styles.emptyPanel}>
+            <MessageSquare className={styles.emptyPanelIcon} size={52} />
+            <p>{at.no_conv}</p>
+          </div>
+        ) : (
+          <>
+            <div className={styles.chatHeader}>
+              <button className={styles.backButton} onClick={handleBack}>
+                <ArrowLeft size={22} />
               </button>
-              <button
-                onClick={() => { sessionStorage.removeItem(STORAGE_KEY); setToken(null); }}
-                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: "0.75rem", fontWeight: 500, fontFamily: "Sora, sans-serif" }}
-              >
-                <LogOut size={12} />
-                <span className="hide-on-mobile">{at.logout}</span>
-              </button>
-            </div>
-          </div>
-
-          <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
-            <div style={{ position: "relative" }}>
-              <Search size={14} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
-              <input
-                type="text" placeholder={at.search} value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{ width: "100%", padding: "8px 12px 8px 32px", borderRadius: 10, background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text)", fontSize: "0.85rem", outline: "none", fontFamily: "Sora, sans-serif", boxSizing: "border-box" }}
-              />
-            </div>
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
-            {loadingUsers ? (
-              <div style={{ display: "flex", justifyContent: "center", paddingTop: 48 }}>
-                <Loader2 size={22} style={{ color: "var(--accent)", animation: "spin 1s linear infinite" }} />
+              <div className={styles.chatAvatar}>{selectedUser.name[0]?.toUpperCase()}</div>
+              <div className={styles.chatTitle}>
+                <p className={styles.chatName}>{selectedUser.name}</p>
+                <p className={styles.chatEmail}>{selectedUser.email}</p>
               </div>
-            ) : filteredUsers.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "48px 20px" }}>
-                <Users size={32} style={{ color: "var(--text-muted)", margin: "0 auto 10px", display: "block", opacity: 0.3 }} />
-                <p style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>{at.no_users}</p>
-              </div>
-            ) : (
-              filteredUsers.map(u => (
-                <UserRow
-                  key={u.id}
-                  user={u}
-                  isActive={selectedUser?.id === u.id}
-                  deleteUserLabel={at.delete_user}
-                  onSelect={loadConversation}
-                  onDelete={deleteUser}
-                />
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* ── Chat panel ── */}
-        <div className={`admin-chat-panel${mobileView === "chat" ? " visible-mobile" : ""}`} style={{ background: "var(--bg)" }}>
-          {!selectedUser ? (
-            <div style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-              <MessageSquare size={52} style={{ color: "var(--text-muted)", opacity: 0.15 }} />
-              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>{at.no_conv}</p>
             </div>
-          ) : (
-            <>
-              {/* Header */}
-              <div style={{ height: 60, padding: "0 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, background: "var(--bg-card)", flexShrink: 0 }}>
-                <button
-                  onClick={handleBack}
-                  className="back-btn-mobile"
-                  style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", display: "flex", alignItems: "center", padding: "6px 4px 6px 0", marginRight: 2 }}
-                >
-                  <ArrowLeft size={22} />
-                </button>
-                <div style={{ width: 36, height: 36, borderRadius: 11, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.88rem", color: "#fff", flexShrink: 0 }}>
-                  {selectedUser.name[0]?.toUpperCase()}
+
+            <div
+              className={styles.messages}
+              ref={chatScrollRef}
+              onScroll={event => {
+                if (event.currentTarget.scrollTop < 80) loadOlderMessages();
+              }}
+            >
+              {loadingMsgs ? (
+                <div className={styles.center}>
+                  <Loader2 className={styles.spin} size={24} />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selectedUser.name}</p>
-                  <p style={{ fontSize: "0.65rem", color: "var(--text-muted)", margin: 0, fontFamily: "JetBrains Mono, monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {selectedUser.email}
-                  </p>
+              ) : timeline.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <p>{at.no_messages}</p>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {loadingMore && (
+                    <div className={styles.loadingMore}>
+                      <Loader2 className={styles.spin} size={14} />
+                      {at.loading_more}
+                    </div>
+                  )}
+                  {timeline.map((item, index) => {
+                    const previous = timeline[index - 1];
+                    const showDate = !previous || !isSameDay(item.createdAt, previous.createdAt);
+                    const isAdmin = item.kind === "admin-direct";
 
-              {/* Messages */}
-              <div className="messages-scroll" ref={chatScrollRef} onScroll={handleMessagesScroll}>
-                {loadingMsgs ? (
-                  <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}>
-                    <Loader2 size={24} style={{ color: "var(--accent)", animation: "spin 1s linear infinite" }} />
-                  </div>
-                ) : timeline.length === 0 ? (
-                  <div style={{ textAlign: "center", paddingTop: 60 }}>
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{at.no_messages}</p>
-                  </div>
-                ) : (
-                  <>
-                    {loadingMore && (
-                      <div className="load-more-indicator">
-                        <Loader2 size={14} style={{ marginRight: 6, animation: "spin 1s linear infinite" }} />
-                        {at.loading_more}
-                      </div>
-                    )}
-                    {timeline.map((item, idx) => {
-                      const prev = timeline[idx - 1];
-                      const showDate = !prev || new Date(item.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
-                      return (
+                    return (
+                      <div key={item.id}>
+                        {showDate && <DateSeparator label={formatDate(item.createdAt)} />}
                         <MessageBubble
-                          key={item.id}
-                          item={item}
-                          showDate={showDate}
-                          isEditing={editingMsgId === item.id}
+                          align={isAdmin ? "right" : "left"}
+                          content={item.content}
+                          timeLabel={formatFullTime(item.createdAt)}
+                          tone={isAdmin ? "accent" : "incoming"}
+                          compact
+                          edited={item.edited}
+                          editedLabel={isAdmin ? at.edit.toLowerCase() : "tahrirlangan"}
+                          read={isAdmin ? Boolean(item.readAt) : item.readByAdmin}
+                          showStatus
+                          isEditing={isAdmin && editingMsgId === item.id}
                           editValue={editingMsgId === item.id ? editValue : ""}
-                          at={at}
+                          editLabel={at.edit}
+                          deleteLabel={at.delete}
                           onEditValueChange={setEditValue}
                           onSaveEdit={saveEditMsg}
-                          onCancelEdit={cancelEditMsg}
-                          onStartEdit={startEditMsg}
-                          onDelete={deleteMessage}
+                          onCancelEdit={() => setEditingMsgId(null)}
+                          onStartEdit={isAdmin ? () => {
+                            setEditingMsgId(item.id);
+                            setEditValue(item.content);
+                          } : undefined}
+                          onDelete={() => deleteMessage(item)}
                         />
-                      );
-                    })}
-                  </>
-                )}
-                <div ref={bottomRef} style={{ height: 4 }} />
-              </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+              <div className={styles.bottomAnchor} ref={bottomRef} />
+            </div>
 
-              {/* Input */}
-              <div className="reply-bar">
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.7rem", color: "#fff", flexShrink: 0 }}>
-                  SY
-                </div>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                  onFocus={() => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300)}
-                  placeholder={at.reply_placeholder}
-                  style={{ flex: 1, padding: "10px 13px", borderRadius: 12, background: "var(--bg-secondary)", border: "1.5px solid var(--border)", color: "var(--text)", fontSize: "0.88rem", outline: "none", fontFamily: "Sora, sans-serif", transition: "border-color 0.2s" }}
-                  onFocusCapture={e => (e.target.style.borderColor = "var(--accent)")}
-                  onBlurCapture={e => (e.target.style.borderColor = "var(--border)")}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || sending}
-                  style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 10, padding: "10px 13px", cursor: !input.trim() || sending ? "not-allowed" : "pointer", opacity: !input.trim() || sending ? 0.5 : 1, display: "flex", alignItems: "center", flexShrink: 0, transition: "all 0.2s" }}
-                >
-                  {sending ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={16} />}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </>
+            <MessageComposer
+              admin
+              value={input}
+              placeholder={at.reply_placeholder}
+              sending={sending}
+              avatarLabel="SY"
+              onChange={setInput}
+              onSend={sendMessage}
+              onFocus={() => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300)}
+            />
+          </>
+        )}
+      </section>
+    </div>
   );
 }

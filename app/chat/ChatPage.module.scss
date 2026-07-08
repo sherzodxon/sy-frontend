@@ -1,0 +1,290 @@
+.page {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.center {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.headerInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1024px;
+  height: 64px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.brandGroup,
+.brand,
+.mobileControls,
+.feature {
+  display: flex;
+  align-items: center;
+}
+
+.brandGroup {
+  gap: 14px;
+}
+
+.brand {
+  gap: 10px;
+}
+
+.backLink,
+.iconTile,
+.iconButton,
+.mobileButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backLink {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.iconTile {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.title {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.subtitle,
+.mono {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+}
+
+.desktopControls {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text);
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  outline: none;
+  padding: 4px 10px;
+}
+
+.mobileMenu .select {
+  background: var(--bg-secondary);
+}
+
+.iconButton {
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 6px 10px;
+}
+
+.adminLink {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.mobileButton {
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.mobileMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  padding: 12px 20px 16px;
+}
+
+.mobileControls {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.themePlaceholder {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+}
+
+.main {
+  flex: 1;
+  padding: 24px 20px;
+}
+
+.loginPrompt {
+  max-width: 400px;
+  margin: 60px auto 0;
+  text-align: center;
+}
+
+.loginCard {
+  padding: 40px 32px;
+  border-radius: 24px;
+}
+
+.promptIcon,
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.promptIcon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.loginTitle,
+.emptyTitle {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.loginTitle {
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+}
+
+.loginText {
+  margin-bottom: 24px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+.feature {
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.feature:last-of-type {
+  border-bottom: 0;
+}
+
+.promptButton {
+  justify-content: center;
+  width: 100%;
+  margin-top: 24px;
+  padding: 10px 20px;
+}
+
+.loading,
+.empty {
+  display: flex;
+  justify-content: center;
+  padding-top: 80px;
+}
+
+.empty {
+  display: block;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px;
+  border-radius: 18px;
+}
+
+.emptyTitle {
+  margin-bottom: 6px;
+  font-size: 0.92rem;
+}
+
+.emptyText {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.timeline {
+  display: flex;
+  max-width: 720px;
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 14px;
+  color: var(--text-muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+}
+
+@media (min-width: 768px) {
+  .desktopControls {
+    display: flex;
+  }
+
+  .mobileButton,
+  .mobileMenu {
+    display: none;
+  }
+}

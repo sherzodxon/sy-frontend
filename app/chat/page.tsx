@@ -1,47 +1,37 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useLang } from "@/hooks/useLang";
-import { locales, Locale } from "@/lib/i18n";
-import { chatApi, UserMessage, AdminDirectMessage } from "@/services/api";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useTheme } from "next-themes";
 import {
-  Send, Loader2, RefreshCw, LogOut, ShieldCheck,
-  MessageSquare, Sparkles, Sun, Moon, Monitor,
-  ArrowLeft, Menu, X, Check, CheckCheck, Pencil,
+  ArrowLeft,
+  Loader2,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Monitor,
+  Moon,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  Sun,
+  X,
 } from "lucide-react";
-import Link from "next/link";
 import AuthModal from "@/components/chat/AuthModal";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type ConvItem =
-  | (UserMessage & { kind: "user-msg" })
-  | (AdminDirectMessage & { kind: "admin-direct" });
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function buildTimeline(userMsgs: UserMessage[], adminMsgs: AdminDirectMessage[]): ConvItem[] {
-  const all: ConvItem[] = [
-    ...userMsgs.map(m => ({ ...m, kind: "user-msg" as const })),
-    ...adminMsgs.map(m => ({ ...m, kind: "admin-direct" as const })),
-  ];
-  return all.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-}
-
-function fmt(d: string) {
-  return new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString([], { day: "2-digit", month: "long", year: "numeric" });
-}
-
-function isSameDay(a: string, b: string) {
-  return new Date(a).toDateString() === new Date(b).toDateString();
-}
-
-// ─── Component ───────────────────────────────────────────────────────────────
+import DateSeparator from "@/components/chat/DateSeparator";
+import MessageBubble from "@/components/chat/MessageBubble";
+import MessageComposer from "@/components/chat/MessageComposer";
+import {
+  buildTimeline,
+  formatDate,
+  formatTime,
+  isSameDay,
+} from "@/components/chat/chatUtils";
+import { useAuth } from "@/hooks/useAuth";
+import { useLang } from "@/hooks/useLang";
+import { Locale, locales } from "@/lib/i18n";
+import { AdminDirectMessage, chatApi, UserMessage } from "@/services/api";
+import styles from "./ChatPage.module.scss";
 
 export default function ChatPage() {
   const { user, logout, loading } = useAuth();
@@ -58,8 +48,6 @@ export default function ChatPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-
-  // Pagination — eng so'nggi 20 ta xabar, tepaga scroll qilinganda yana +20
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -67,42 +55,39 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const skipAutoScrollRef = useRef(false);
 
-  useEffect(() => setMounted(true), []);
-
-  // ── Data fetching ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
 
   const loadMessages = useCallback(async () => {
     if (!user) return;
     try {
-      // Fon rejimidagi yangilanishda hozir yuklangan oyna hajmini saqlab qolamiz
       const currentTotal = userMsgs.length + adminMsgs.length;
-      const limit = Math.max(currentTotal, 20);
-      const data = await chatApi.getMessages(undefined, limit);
+      const data = await chatApi.getMessages(undefined, Math.max(currentTotal, 20));
       setUserMsgs(data.messages);
       setAdminMsgs(data.adminMessages);
       setHasMore(data.hasMore);
       setNextCursor(data.nextCursor);
-    } catch { /* silent */ }
+    } catch {
+      // Silent refresh.
+    }
   }, [user, userMsgs.length, adminMsgs.length]);
 
-  // Yuqoriga scroll qilinganda yana +20 ta eskiroq xabar yuklash.
-  // Eslatma: sahifa "position: sticky" header/footer bilan qurilgan — demak
-  // ICHKI div emas, balki BUTUN OYNA (window) scroll bo'ladi, shuning uchun
-  // scroll pozitsiyasini window.scrollY orqali kuzatamiz va tiklaymiz.
   const loadOlderMessages = useCallback(async () => {
     if (!user || !hasMore || loadingMore || !nextCursor) return;
     setLoadingMore(true);
     const prevScrollHeight = document.documentElement.scrollHeight;
     const prevScrollY = window.scrollY;
+
     try {
       const data = await chatApi.getMessages(nextCursor);
       setUserMsgs(prev => {
-        const existing = new Set(prev.map(m => m.id));
-        return [...data.messages.filter(m => !existing.has(m.id)), ...prev];
+        const existing = new Set(prev.map(message => message.id));
+        return [...data.messages.filter(message => !existing.has(message.id)), ...prev];
       });
       setAdminMsgs(prev => {
-        const existing = new Set(prev.map(m => m.id));
-        return [...data.adminMessages.filter(m => !existing.has(m.id)), ...prev];
+        const existing = new Set(prev.map(message => message.id));
+        return [...data.adminMessages.filter(message => !existing.has(message.id)), ...prev];
       });
       setHasMore(data.hasMore);
       setNextCursor(data.nextCursor);
@@ -111,10 +96,13 @@ export default function ChatPage() {
         const newScrollHeight = document.documentElement.scrollHeight;
         window.scrollTo(0, newScrollHeight - prevScrollHeight + prevScrollY);
       });
-    } catch { /* silent */ } finally { setLoadingMore(false); }
+    } catch {
+      // Silent pagination failure.
+    } finally {
+      setLoadingMore(false);
+    }
   }, [user, hasMore, loadingMore, nextCursor]);
 
-  // Oynaning o'zi tepaga yaqinlashganda (80px) eski xabarlarni yuklash
   useEffect(() => {
     const onWindowScroll = () => {
       if (window.scrollY < 80) loadOlderMessages();
@@ -124,16 +112,22 @@ export default function ChatPage() {
   }, [loadOlderMessages]);
 
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+    const loadInitialMessages = async () => {
       setFetching(true);
-      chatApi.getMessages().then(data => {
+      try {
+        const data = await chatApi.getMessages();
         setUserMsgs(data.messages);
         setAdminMsgs(data.adminMessages);
         setHasMore(data.hasMore);
         setNextCursor(data.nextCursor);
-      }).catch(() => {}).finally(() => setFetching(false));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      } catch {
+        // Silent initial load failure.
+      } finally {
+        setFetching(false);
+      }
+    };
+    loadInitialMessages();
   }, [user]);
 
   useEffect(() => {
@@ -143,11 +137,12 @@ export default function ChatPage() {
   }, [user, loadMessages]);
 
   useEffect(() => {
-    if (skipAutoScrollRef.current) { skipAutoScrollRef.current = false; return; }
+    if (skipAutoScrollRef.current) {
+      skipAutoScrollRef.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [userMsgs, adminMsgs]);
-
-  // ── Actions ────────────────────────────────────────────────────────────────
 
   const cycleTheme = () => {
     const order = ["light", "dark", "system"];
@@ -161,7 +156,11 @@ export default function ChatPage() {
       const msg = await chatApi.sendMessage(input.trim());
       setUserMsgs(prev => [...prev, msg]);
       setInput("");
-    } catch { alert(t.chat.send + " error"); } finally { setSending(false); }
+    } catch {
+      alert(`${t.chat.send} error`);
+    } finally {
+      setSending(false);
+    }
   };
 
   const startEdit = (msg: UserMessage) => {
@@ -173,295 +172,208 @@ export default function ChatPage() {
     if (!editingId || !editValue.trim()) return;
     try {
       const updated = await chatApi.editMessage(editingId, editValue.trim());
-      setUserMsgs(prev => prev.map(m => m.id === editingId ? { ...m, ...updated } : m));
-    } catch { /* silent */ } finally { setEditingId(null); }
+      setUserMsgs(prev =>
+        prev.map(message => (message.id === editingId ? { ...message, ...updated } : message))
+      );
+    } catch {
+      // Silent edit failure.
+    } finally {
+      setEditingId(null);
+    }
   };
 
-  // ── Derived ────────────────────────────────────────────────────────────────
-
-  const timeline = buildTimeline(userMsgs, adminMsgs);
-
-  const ThemeIcon = () => {
-    if (!mounted) return <span style={{ width: 15, height: 15, display: "inline-block" }} />;
+  const renderThemeIcon = () => {
+    if (!mounted) return <span aria-hidden className={styles.themePlaceholder} />;
     if (theme === "dark") return <Moon size={15} />;
     if (theme === "system") return <Monitor size={15} />;
     return <Sun size={15} />;
   };
 
-  const iconBtn: React.CSSProperties = {
-    background: "var(--bg-secondary)", border: "1px solid var(--border)",
-    color: "var(--text-muted)", borderRadius: 8, padding: "6px 10px",
-    cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-    fontSize: "0.78rem", fontWeight: 500,
-  };
+  const renderControls = (mobile = false) => (
+    <>
+      <select
+        className={styles.select}
+        value={locale}
+        onChange={event => setLocale(event.target.value as Locale)}
+      >
+        {locales.map(item => (
+          <option key={item.code} value={item.code}>
+            {item.flag} {item.label}
+          </option>
+        ))}
+      </select>
+      <button className={styles.iconButton} onClick={cycleTheme}>
+        {renderThemeIcon()}
+      </button>
+      {user ? (
+        <>
+          {user.role === "ADMIN" && !mobile && (
+            <Link className={`${styles.iconButton} ${styles.adminLink}`} href="/admin">
+              <ShieldCheck size={13} /> {t.chat.admin_link}
+            </Link>
+          )}
+          <button className={styles.iconButton} onClick={loadMessages}>
+            <RefreshCw size={14} />
+          </button>
+          <button className={styles.iconButton} onClick={logout}>
+            <LogOut size={13} /> {t.chat.logout}
+          </button>
+        </>
+      ) : (
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setShowAuth(true);
+            setMobileMenu(false);
+          }}
+        >
+          {t.chat.sign_in_btn}
+        </button>
+      )}
+    </>
+  );
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  const timeline = buildTimeline(userMsgs, adminMsgs);
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
-        <Loader2 size={32} className="animate-spin" style={{ color: "var(--accent)" }} />
+      <div className={styles.center}>
+        <Loader2 size={32} className="animate-spin" />
       </div>
     );
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
-
-      {/* ── Navbar ── */}
-      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "var(--bg-card)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid var(--border)" }}>
-        <div style={{ maxWidth: 1024, margin: "0 auto", padding: "0 20px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <Link href="/" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 8, background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", textDecoration: "none" }}>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <div className={styles.brandGroup}>
+            <Link href="/" className={styles.backLink}>
               <ArrowLeft size={15} />
             </Link>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 9, background: "var(--accent-dim)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <MessageSquare size={15} style={{ color: "var(--accent)" }} />
+            <div className={styles.brand}>
+              <div className={styles.iconTile}>
+                <MessageSquare size={15} />
               </div>
               <div>
-                <p style={{ fontWeight: 700, fontSize: "0.92rem", color: "var(--text)", margin: 0, letterSpacing: "-0.02em" }}>{t.chat.title}</p>
-                <p style={{ fontSize: "0.68rem", color: "var(--text-muted)", margin: 0, fontFamily: "JetBrains Mono, monospace" }}>
-                  {user ? user.name : "yarmatxonov.uz"}
-                </p>
+                <p className={styles.title}>{t.chat.title}</p>
+                <p className={styles.subtitle}>{user ? user.name : "yarmatxonov.uz"}</p>
               </div>
             </div>
           </div>
 
-          {/* Desktop controls */}
-          <div className="nav-controls">
-            <select value={locale} onChange={e => setLocale(e.target.value as Locale)} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "4px 10px", fontSize: "0.75rem", fontFamily: "JetBrains Mono,monospace", cursor: "pointer", outline: "none" }}>
-              {locales.map(l => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
-            </select>
-            <button onClick={cycleTheme} style={{ ...iconBtn, padding: 7 }}><ThemeIcon /></button>
-            {user ? (
-              <>
-                {user.role === "ADMIN" && (
-                  <Link href="/admin" style={{ ...iconBtn, background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--accent)", textDecoration: "none", padding: "6px 12px" }}>
-                    <ShieldCheck size={13} /> {t.chat.admin_link}
-                  </Link>
-                )}
-                <button onClick={loadMessages} style={iconBtn}><RefreshCw size={14} /></button>
-                <button onClick={logout} style={iconBtn}><LogOut size={13} /> {t.chat.logout}</button>
-              </>
-            ) : (
-              <button onClick={() => setShowAuth(true)} className="btn-primary" style={{ padding: "6px 16px", fontSize: "0.82rem" }}>
-                {t.chat.sign_in_btn}
-              </button>
-            )}
-          </div>
-
-          {/* Mobile hamburger */}
-          <button className="nav-mobile-btn" onClick={() => setMobileMenu(!mobileMenu)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text)", padding: 4 }}>
+          <div className={styles.desktopControls}>{renderControls()}</div>
+          <button className={styles.mobileButton} onClick={() => setMobileMenu(value => !value)}>
             {mobileMenu ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
-
-        {/* Mobile menu */}
-        {mobileMenu && (
-          <div className="nav-mobile-menu" style={{ background: "var(--bg-card)", borderBottom: "1px solid var(--border)", padding: "12px 20px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <select value={locale} onChange={e => setLocale(e.target.value as Locale)} style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "4px 10px", fontSize: "0.75rem", fontFamily: "JetBrains Mono,monospace", cursor: "pointer", outline: "none" }}>
-                {locales.map(l => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
-              </select>
-              <button onClick={cycleTheme} style={{ ...iconBtn, padding: 7 }}><ThemeIcon /></button>
-              {user ? (
-                <>
-                  <button onClick={loadMessages} style={iconBtn}><RefreshCw size={13} /></button>
-                  <button onClick={logout} style={iconBtn}><LogOut size={13} /> {t.chat.logout}</button>
-                </>
-              ) : (
-                <button onClick={() => { setShowAuth(true); setMobileMenu(false); }} className="btn-primary" style={{ padding: "6px 16px", fontSize: "0.82rem" }}>{t.chat.sign_in_btn}</button>
-              )}
-            </div>
-          </div>
-        )}
+        {mobileMenu && <div className={styles.mobileMenu}><div className={styles.mobileControls}>{renderControls(true)}</div></div>}
       </header>
 
-      {/* ── Messages ── */}
-      <div style={{ flex: 1, padding: "24px 20px" }}>
-
-        {/* Not logged in */}
+      <main className={styles.main}>
         {!user && (
-          <div style={{ maxWidth: 400, margin: "60px auto 0", textAlign: "center" }}>
-            <div className="card" style={{ borderRadius: 24, padding: "40px 32px" }}>
-              <div className="float" style={{ width: 72, height: 72, borderRadius: 20, margin: "0 auto 20px", background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--border)" }}>
-                <MessageSquare size={28} style={{ color: "var(--accent)" }} />
+          <div className={styles.loginPrompt}>
+            <div className={`card ${styles.loginCard}`}>
+              <div className={`float ${styles.promptIcon}`}>
+                <MessageSquare size={28} />
               </div>
-              <h2 style={{ fontWeight: 700, fontSize: "1.15rem", color: "var(--text)", marginBottom: 8 }}>{t.chat.login_prompt}</h2>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.65, marginBottom: 24 }}>{t.chat.login_desc}</p>
-              {[t.chat.feature_1, t.chat.feature_2, t.chat.feature_3].map((f, i, arr) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
-                  <Sparkles size={13} style={{ color: "var(--accent)", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", textAlign: "left" }}>{f}</span>
+              <h2 className={styles.loginTitle}>{t.chat.login_prompt}</h2>
+              <p className={styles.loginText}>{t.chat.login_desc}</p>
+              {[t.chat.feature_1, t.chat.feature_2, t.chat.feature_3].map(feature => (
+                <div className={styles.feature} key={feature}>
+                  <Sparkles size={13} />
+                  <span>{feature}</span>
                 </div>
               ))}
-              <button onClick={() => setShowAuth(true)} className="btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 24, padding: "10px 20px" }}>
+              <button
+                className={`btn-primary ${styles.promptButton}`}
+                onClick={() => setShowAuth(true)}
+              >
                 {t.chat.sign_in_btn}
               </button>
             </div>
           </div>
         )}
 
-        {/* Loading */}
         {user && fetching && (
-          <div style={{ display: "flex", justifyContent: "center", paddingTop: 80 }}>
-            <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
+          <div className={styles.loading}>
+            <Loader2 size={24} className="animate-spin" />
           </div>
         )}
 
-        {/* Empty */}
         {user && !fetching && timeline.length === 0 && (
-          <div style={{ textAlign: "center", paddingTop: 80 }}>
-            <div style={{ width: 60, height: 60, borderRadius: 18, margin: "0 auto 16px", background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <MessageSquare size={22} style={{ color: "var(--accent)" }} />
+          <div className={styles.empty}>
+            <div className={styles.emptyIcon}>
+              <MessageSquare size={22} />
             </div>
-            <p style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>{t.chat.no_messages}</p>
-            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{t.chat.no_messages_hint}</p>
+            <p className={styles.emptyTitle}>{t.chat.no_messages}</p>
+            <p className={styles.emptyText}>{t.chat.no_messages_hint}</p>
           </div>
         )}
 
-        {/* ── Timeline ── */}
         {user && !fetching && timeline.length > 0 && (
-          <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 4 }}>
-
+          <div className={styles.timeline}>
             {loadingMore && (
-              <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 14px", fontSize: "0.7rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>
-                <Loader2 size={13} className="animate-spin" style={{ marginRight: 6 }} />
+              <div className={styles.loadingMore}>
+                <Loader2 size={13} className="animate-spin" />
                 {t.chat.loading_more}
               </div>
             )}
 
-            {/* History separator */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0 16px" }}>
-              <div style={{ flex: 1, height: 1, }} />
-              <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{t.chat.history}</span>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-            </div>
+            <DateSeparator label={t.chat.history} plain />
 
             {timeline.map((item, idx) => {
-              const prev = timeline[idx - 1];
-              const showDate = !prev || !isSameDay(item.createdAt, prev.createdAt);
+              const previous = timeline[idx - 1];
+              const showDate = !previous || !isSameDay(item.createdAt, previous.createdAt);
 
               return (
                 <div key={item.id}>
-                  {/* Date separator */}
-                  {showDate && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "12px 0 10px" }}>
-                      <div style={{ flex: 1, height: 1, background: "var(--border)", }} />
-                      <span style={{ fontSize: "0.63rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace", padding: "2px 10px", background: "var(--bg-secondary)", borderRadius: 20, border: "1px solid var(--border)" }}>
-                        {fmtDate(item.createdAt)}
-                      </span>
-                      <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-                    </div>
+                  {showDate && <DateSeparator label={formatDate(item.createdAt)} />}
+                  {item.kind === "admin-direct" ? (
+                    <MessageBubble
+                      align="left"
+                      avatarLabel="SY"
+                      content={item.content}
+                      timeLabel={formatTime(item.createdAt)}
+                      tone="incoming"
+                      variant="incomingSoft"
+                    />
+                  ) : (
+                    <MessageBubble
+                      align="right"
+                      content={item.content}
+                      timeLabel={formatTime(item.createdAt)}
+                      tone="accent"
+                      variant="outgoingLarge"
+                      edited={item.edited}
+                      editedLabel={t.chat.edited}
+                      read={item.readByAdmin}
+                      showStatus
+                      isEditing={editingId === item.id}
+                      editValue={editValue}
+                      onEditValueChange={setEditValue}
+                      onSaveEdit={saveEdit}
+                      onCancelEdit={() => setEditingId(null)}
+                      onStartEdit={() => startEdit(item)}
+                    />
                   )}
-
-                  {/* ── Admin message — left side ── */}
-                  {item.kind === "admin-direct" && (
-                    <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-end", gap: 8, marginBottom: 10 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.62rem", color: "#fff", flexShrink: 0 }}>
-                        SY
-                      </div>
-                      <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: 3  }}>
-                        <div className="chat-bubble-admin" style={{ fontSize: "0.9rem", lineHeight: 1.6 ,background: "var(--bg-card)",padding: "8px 12px", borderRadius: "10px 10px 10px 2px"}}>
-                          {item.content}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 2 }}>
-                          <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmt(item.createdAt)}</span>
-                          {/* {item.readAt
-                            ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                            : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                          } */}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── User message — right side ── */}
-                  {item.kind === "user-msg" && (() => {
-                    const msg = item as UserMessage & { kind: "user-msg" };
-                    return (
-                      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-                        <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-                          {editingId === msg.id ? (
-                            <div style={{ display: "flex", gap: 6, width: "100%", alignItems: "center" }}>
-                              <input
-                                autoFocus value={editValue}
-                                onChange={e => setEditValue(e.target.value)}
-                                onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingId(null); }}
-                                style={{ flex: "1 1 auto", minWidth: 0, padding: "8px 12px", borderRadius: 10, background: "var(--bg-secondary)", border: "1.5px solid var(--accent)", color: "var(--text)", fontSize: "16px", outline: "none", fontFamily: "Sora, sans-serif" }}
-                              />
-                              <button onClick={saveEdit} style={{ flexShrink: 0, width: 32, height: 32, minWidth: 32, boxSizing: "border-box", background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={14} /></button>
-                              <button onClick={() => setEditingId(null)} style={{ flexShrink: 0, width: 32, height: 32, minWidth: 32, boxSizing: "border-box", background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={14} /></button>
-                            </div>
-                          ) : (
-                            <div
-                              className="chat-bubble-user"
-                              style={{ fontSize: "0.9rem", lineHeight: 1.6, position: "relative", cursor: "default" }}
-                              onMouseEnter={e => { const btn = (e.currentTarget as HTMLElement).querySelector(".edit-btn") as HTMLElement; if (btn) btn.style.opacity = "1"; }}
-                              onMouseLeave={e => { const btn = (e.currentTarget as HTMLElement).querySelector(".edit-btn") as HTMLElement; if (btn) btn.style.opacity = "0"; }}
-                            >
-                              {msg.content}
-                              {msg.edited && <span style={{ fontSize: "0.6rem", opacity: 0.7, marginLeft: 6 }}>({t.chat.edited})</span>}
-                              <button
-                                className="edit-btn"
-                                onClick={() => startEdit(msg)}
-                                style={{ position: "absolute", top: -8, left: -8, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 6, padding: "3px 5px", cursor: "pointer", display: "flex", alignItems: "center", opacity: 0, transition: "opacity 0.15s", lineHeight: 0 }}
-                              >
-                                <Pencil size={11} />
-                              </button>
-                            </div>
-                          )}
-                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}>{fmt(msg.createdAt)}</span>
-                            {msg.readByAdmin
-                              ? <CheckCheck size={11} style={{ color: "var(--accent)" }} />
-                              : <Check size={11} style={{ color: "var(--text-muted)" }} />
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
                 </div>
               );
             })}
-
             <div ref={bottomRef} />
           </div>
         )}
-      </div>
+      </main>
 
-      {/* ── Input ── */}
       {user && (
-        <div style={{ position: "sticky", bottom: 0, background: "var(--bg-card)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderTop: "1px solid var(--border)", padding: "14px 20px" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto" }}>
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: "var(--accent-dim)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.72rem", color: "var(--accent)" }}>
-                {user.name?.[0]?.toUpperCase() || "U"}
-              </div>
-              <input
-                type="text" value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                placeholder={t.chat.placeholder}
-                style={{ flex: 1, padding: "10px 16px", borderRadius: 12, background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text)", fontSize: "16px", outline: "none", fontFamily: "Sora, sans-serif", transition: "border-color 0.2s" }}
-                onFocus={e => (e.target.style.borderColor = "var(--accent)")}
-                onBlur={e => (e.target.style.borderColor = "var(--border)")}
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!input.trim() || sending}
-                className="btn-primary"
-                style={{ padding: "10px 18px", borderRadius: 12, flexShrink: 0, opacity: !input.trim() || sending ? 0.5 : 1, cursor: !input.trim() || sending ? "not-allowed" : "pointer" }}
-              >
-                {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-              </button>
-            </div>
-          </div>
-        </div>
+        <MessageComposer
+          value={input}
+          placeholder={t.chat.placeholder}
+          sending={sending}
+          avatarLabel={user.name?.[0]?.toUpperCase() || "U"}
+          onChange={setInput}
+          onSend={sendMessage}
+        />
       )}
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}

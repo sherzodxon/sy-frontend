@@ -4,6 +4,7 @@ import { X, Loader2, Mail, Lock, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLang } from "@/hooks/useLang";
 import { authApi } from "@/services/api";
+import styles from "./AuthModal.module.scss";
 
 interface Props {
   onClose: () => void;
@@ -59,7 +60,7 @@ export default function AuthModal({ onClose }: Props) {
     if (!clientId) return;
 
     if (window.google) {
-      setGoogleReady(true);
+      queueMicrotask(() => setGoogleReady(true));
       return;
     }
 
@@ -128,54 +129,18 @@ useEffect(() => {
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    background: "var(--bg-secondary)",
-    border: "1px solid var(--border)",
-    color: "var(--text)",
-    padding: "10px 12px 10px 34px",
-    margin: "0",
-    caretColor: "var(--accent)",
-    borderRadius: 12,
-    width: "100%",
-    fontSize: "16px",
-    outline: "none",
-    boxSizing: "border-box",
-  };
-
-  const iconStyle: React.CSSProperties = {
-    position: "absolute",
-    left: 11,
-    top: "50%",
-    transform: "translateY(-50%)",
-    color: "var(--text-muted)",
-    pointerEvents: "none",
-  };
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      className={styles.overlay}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
-        className="w-full max-w-sm rounded-2xl shadow-2xl"
-        style={{
-          background: "var(--bg)",
-          border: "1px solid var(--border)",
-          padding: "24px",
-          width: "100%",
-          maxWidth: 360,
-        }}
-      >
+      <div className={styles.modal}>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <h2 style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--text)", margin: 0 }}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>
             {mode === "login" ? t.chat.modal_signin : t.chat.modal_create}
           </h2>
-          <button
-            onClick={onClose}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4, display: "flex", alignItems: "center", borderRadius: 8 }}
-          >
+          <button onClick={onClose} className={styles.close}>
             <X size={18} />
           </button>
         </div>
@@ -185,54 +150,33 @@ useEffect(() => {
           <>
             <div
               ref={googleBtnRef}
-              style={{ 
-                width: "100%", 
-                minHeight: "44px", 
-                display: googleReady ? "block" : "none",
-                marginBottom: "12px" 
-              }}
+              className={`${styles.googleButton} ${googleReady ? "" : styles.googleHidden}`}
             />
             
             {!googleReady && (
-              <div style={{
-                height: 44, borderRadius: 12, background: "var(--bg-secondary)",
-                border: "1px solid var(--border)", display: "flex",
-                alignItems: "center", justifyContent: "center", gap: 8,
-                fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: 12
-              }}>
+              <div className={styles.googleLoading}>
                 <Loader2 size={14} className="animate-spin" />
                 Google yuklanmoqda…
               </div>
             )}
 
-            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-              <span style={{ fontSize: "0.72rem", fontFamily: "JetBrains Mono, monospace", color: "var(--text-muted)" }}>
+            <div className={styles.divider}>
+              <div className={styles.line} />
+              <span className={styles.dividerText}>
                 {t.chat.modal_or}
               </span>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              <div className={styles.line} />
             </div>
           </>
         )}
 
         {/* Tabs */}
-        <div style={{ display: "flex", borderRadius: 10, padding: 4, background: "var(--bg-secondary)", marginBottom: 16 }}>
+        <div className={styles.tabs}>
           {(["login", "register"] as const).map((m) => (
             <button
               key={m}
               onClick={() => { setMode(m); setError(""); }}
-              style={{
-                flex: 1,
-                padding: "6px 0",
-                fontSize: "0.82rem",
-                fontWeight: 500,
-                borderRadius: 7,
-                cursor: "pointer",
-                transition: "all 0.2s",
-                background: mode === m ? "var(--bg-card)" : "transparent",
-                color: mode === m ? "var(--accent)" : "var(--text-muted)",
-                border: mode === m ? "1px solid var(--border)" : "none",
-              }}
+              className={`${styles.tab} ${mode === m ? styles.tabActive : ""}`}
             >
               {m === "login" ? t.chat.modal_signin : t.chat.modal_register}
             </button>
@@ -240,51 +184,50 @@ useEffect(() => {
         </div>
 
         {/* Fields */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className={styles.fields}>
           {mode === "register" && (
-            <div style={{ position: "relative" }}>
-              <User size={14} style={iconStyle} />
+            <div className={styles.field}>
+              <User size={14} className={styles.fieldIcon} />
               <input
                 type="text"
                 placeholder={t.chat.name}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                style={inputStyle}
+                className={styles.input}
               />
             </div>
           )}
-          <div style={{ position: "relative" }}>
-            <Mail size={14} style={iconStyle} />
+          <div className={styles.field}>
+            <Mail size={14} className={styles.fieldIcon} />
             <input
               type="email"
               placeholder={t.chat.email}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={inputStyle}
+              className={styles.input}
             />
           </div>
-          <div style={{ position: "relative" }}>
-            <Lock size={14} style={iconStyle} />
+          <div className={styles.field}>
+            <Lock size={14} className={styles.fieldIcon} />
             <input
               type="password"
               placeholder={t.chat.password}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submit()}
-              style={inputStyle}
+              className={styles.input}
             />
           </div>
         </div>
 
         {error && (
-          <p style={{ fontSize: "0.78rem", color: "#ef4444", marginTop: 10, marginBottom: 0 }}>{error}</p>
+          <p className={styles.error}>{error}</p>
         )}
 
         <button
           onClick={submit}
           disabled={loading}
-          className="btn-primary"
-          style={{ width: "100%", justifyContent: "center", marginTop: 14, padding: "10px 20px", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+          className={`btn-primary ${styles.submit}`}
         >
           {loading && <Loader2 size={15} className="animate-spin" />}
           {mode === "login" ? t.chat.modal_signin : t.chat.modal_create}
