@@ -51,14 +51,16 @@ export default function AdminSidebar({
           </div>
           <div>
             <p className={styles.title}>{labels.title}</p>
-            <p className={styles.caption}>
-              {users.length} {labels.users?.toLowerCase()}
-              {totalUnread > 0 && (
+            <div className={styles.caption}>
+             <p>{users.length} {labels.users?.toLowerCase()}</p>
+              <div className="unread-message">
+                {totalUnread > 0 && (
                 <span className={styles.unread}>
                   · {totalUnread} {labels.unread}
                 </span>
               )}
-            </p>
+              </div>
+            </div>
           </div>
         </div>
         <div className={styles.toolbar}>
@@ -67,7 +69,6 @@ export default function AdminSidebar({
           </button>
           <button className={styles.toolButton} onClick={onLogout}>
             <LogOut size={12} />
-            <span className={styles.hideOnMobile}>{labels.logout}</span>
           </button>
         </div>
       </div>
