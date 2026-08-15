@@ -116,6 +116,14 @@ export const chatApi = {
     }),
 };
 
+export const pushApi = {
+  // Admin ilovasi (Capacitor) FCM token'ini backendga ro'yxatdan o'tkazadi
+  register: (fcmToken: string, adminToken: string) =>
+    adminFetch<{ registered: boolean }>("/admin/push/register", adminToken, {
+      method: "POST", body: JSON.stringify({ token: fcmToken }),
+    }),
+};
+
 // ── Types ──
 
 export interface User {

@@ -21,6 +21,7 @@ import {
   isSameDay,
 } from "@/components/chat/chatUtils";
 import { useLang } from "@/hooks/useLang";
+import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { AdminDirectMessage, AdminUser, chatApi, UserMessage } from "@/services/api";
 import styles from "./AdminPage.module.scss";
 
@@ -69,6 +70,8 @@ export default function AdminPage() {
     const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) queueMicrotask(() => setToken(saved));
   }, []);
+
+  usePushRegistration(token);
 
   const loadUsers = useCallback(async () => {
     if (!tokenRef.current) return;
