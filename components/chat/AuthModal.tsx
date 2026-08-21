@@ -37,6 +37,7 @@ export default function AuthModal({ onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [googleReady, setGoogleReady] = useState(false);
+  const [googleBtnWidth, setGoogleBtnWidth] = useState(312);
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -80,6 +81,23 @@ export default function AuthModal({ onClose }: Props) {
     document.body.appendChild(script);
   }, [clientId]);
 
+  // Konteyner kengligini kuzatish — Google tugmasi ekran o'lchamiga moslashishi uchun
+  useEffect(() => {
+    const el = googleBtnRef.current;
+    if (!el) return;
+
+    const update = () => {
+      // Google GSI tugmasi eng kichigi 200px, eng kattasi 400px kenglikni qo'llab-quvvatlaydi
+      const width = Math.round(el.offsetWidth) || 312;
+      setGoogleBtnWidth(Math.min(400, Math.max(200, width)));
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // 2-effekt: script tayyor + ref ulanganda button render qilish
 useEffect(() => {
   if (!googleReady || !clientId || !googleBtnRef.current || !window.google?.accounts?.id) return;
@@ -100,7 +118,7 @@ useEffect(() => {
     window.google.accounts.id.renderButton(googleBtnRef.current, {
       theme: "outline",
       size: "large",
-      width: 312,
+      width: googleBtnWidth,
       text: "signin_with",
       shape: "rectangular",
       locale: currentLang, // <-- TO'G'RILANDI: Sof string qiymat ketadi
@@ -108,7 +126,7 @@ useEffect(() => {
   } catch (err) {
     console.error("Google button render xatosi:", err);
   }
-}, [googleReady, clientId, handleGoogleResponse, locale]);
+}, [googleReady, clientId, handleGoogleResponse, locale, googleBtnWidth]);
 
   const submit = async () => {
     setError("");
