@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -54,6 +54,8 @@ export default function AdminPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const pendingScrollFixRef = useRef<{ prevScrollHeight: number; prevScrollTop: number } | null>(null);
   const editingMsgIdRef = useRef<string | null>(null);
   const editValueRef = useRef("");
   const tokenRef = useRef<string | null>(null);
@@ -89,8 +91,29 @@ export default function AdminPage() {
 
   useEffect(() => {
     const total = userMsgs.length + adminMsgs.length;
-    if (total > prevCountRef.current) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (total > prevCountRef.current) {
+      // "smooth" ishlatilsa, animatsiya davomida scrollTop vaqtincha 80px dan
+      // pastga tushib, "eski xabarlarni yukla" tekshiruvini xato ishga tushiradi —
+      // shu sabab bir zumda (animatsiyasiz) scroll qilamiz.
+      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      // Shrift yuklanib almashganda (font-swap) matn balandligi o'zgarishi mumkin —
+      // shu sabab scroll tugagach yana bir bor pastki chegarani to'g'rilaymiz.
+      document.fonts?.ready?.then(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      });
+    }
     prevCountRef.current = total;
+  }, [userMsgs, adminMsgs]);
+
+  // DOM commitdan keyin, brauzer chizishidan oldin sinxron ishlaydi — eski xabarlar
+  // tepaga qo'shilgach scroll holatini `requestAnimationFrame`ga qaraganda ishonchliroq
+  // tiklaydi (masalan sahifa fon rejimida bo'lsa ham ishlayveradi).
+  useLayoutEffect(() => {
+    const fix = pendingScrollFixRef.current;
+    const el = chatScrollRef.current;
+    if (!fix || !el) return;
+    pendingScrollFixRef.current = null;
+    el.scrollTop = el.scrollHeight - fix.prevScrollHeight + fix.prevScrollTop;
   }, [userMsgs, adminMsgs]);
 
   useEffect(() => {
@@ -156,7 +179,8 @@ export default function AdminPage() {
   const loadOlderMessages = useCallback(async () => {
     const tok = tokenRef.current;
     const user = selectedUserRef.current;
-    if (!tok || !user || !hasMore || loadingMore || !nextCursor) return;
+    if (!tok || !user || !hasMore || loadingMoreRef.current || !nextCursor) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     const el = chatScrollRef.current;
     const prevScrollHeight = el?.scrollHeight ?? 0;
@@ -176,15 +200,14 @@ export default function AdminPage() {
       setHasMore(data.hasMore);
       setNextCursor(data.nextCursor);
       prevCountRef.current += addedCount;
-      requestAnimationFrame(() => {
-        if (el) el.scrollTop = el.scrollHeight - prevScrollHeight + prevScrollTop;
-      });
+      pendingScrollFixRef.current = { prevScrollHeight, prevScrollTop };
     } catch {
       // Silent pagination failure.
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [hasMore, loadingMore, nextCursor]);
+  }, [hasMore, nextCursor]);
 
   const loadConversationSilent = useCallback(async (userId: string) => {
     const tok = tokenRef.current;

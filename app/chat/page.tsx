@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import {
@@ -54,6 +54,9 @@ export default function ChatPage() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const skipAutoScrollRef = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const prevCountRef = useRef(0);
+  const pendingScrollFixRef = useRef<{ prevScrollHeight: number; prevScrollY: number } | null>(null);
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
@@ -74,7 +77,8 @@ export default function ChatPage() {
   }, [user, userMsgs.length, adminMsgs.length]);
 
   const loadOlderMessages = useCallback(async () => {
-    if (!user || !hasMore || loadingMore || !nextCursor) return;
+    if (!user || !hasMore || loadingMoreRef.current || !nextCursor) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     const prevScrollHeight = document.documentElement.scrollHeight;
     const prevScrollY = window.scrollY;
@@ -92,16 +96,14 @@ export default function ChatPage() {
       setHasMore(data.hasMore);
       setNextCursor(data.nextCursor);
       skipAutoScrollRef.current = true;
-      requestAnimationFrame(() => {
-        const newScrollHeight = document.documentElement.scrollHeight;
-        window.scrollTo(0, newScrollHeight - prevScrollHeight + prevScrollY);
-      });
+      pendingScrollFixRef.current = { prevScrollHeight, prevScrollY };
     } catch {
       // Silent pagination failure.
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [user, hasMore, loadingMore, nextCursor]);
+  }, [user, hasMore, nextCursor]);
 
   useEffect(() => {
     const onWindowScroll = () => {
@@ -136,12 +138,39 @@ export default function ChatPage() {
     return () => clearInterval(timer);
   }, [user, loadMessages]);
 
+  // DOM commitdan keyin, brauzer chizishidan oldin sinxron ishlaydi — eski xabarlar
+  // tepaga qo'shilgach scroll holatini `requestAnimationFrame`ga qaraganda ishonchliroq
+  // tiklaydi (masalan sahifa fon rejimida bo'lsa ham ishlayveradi).
+  useLayoutEffect(() => {
+    const fix = pendingScrollFixRef.current;
+    if (!fix) return;
+    pendingScrollFixRef.current = null;
+    const newScrollHeight = document.documentElement.scrollHeight;
+    window.scrollTo({ top: newScrollHeight - fix.prevScrollHeight + fix.prevScrollY, behavior: "instant" });
+  }, [userMsgs, adminMsgs]);
+
   useEffect(() => {
+    const total = userMsgs.length + adminMsgs.length;
     if (skipAutoScrollRef.current) {
       skipAutoScrollRef.current = false;
+      prevCountRef.current = total;
       return;
     }
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Faqat yangi xabar qo'shilganda pastga tushamiz — davriy yangilanish
+    // (loadMessages) bir xil sondagi xabarlarni qayta o'rnatsa ham, o'qiyotgan
+    // foydalanuvchini pastga uloqtirmasligi kerak.
+    if (total > prevCountRef.current) {
+      // "smooth" ishlatilsa, animatsiya davomida scrollY vaqtincha 80px dan
+      // pastga tushib, "eski xabarlarni yukla" tekshiruvini xato ishga tushiradi —
+      // shu sabab bir zumda (animatsiyasiz) scroll qilamiz.
+      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      // Shrift yuklanib almashganda (font-swap) matn balandligi o'zgarishi mumkin —
+      // shu sabab scroll tugagach yana bir bor pastki chegarani to'g'rilaymiz.
+      document.fonts?.ready?.then(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      });
+    }
+    prevCountRef.current = total;
   }, [userMsgs, adminMsgs]);
 
   const cycleTheme = () => {
