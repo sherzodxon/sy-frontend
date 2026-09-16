@@ -73,6 +73,12 @@
   overflow-y: auto;
   box-sizing: border-box;
   transition: border-color 0.2s ease;
+  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none; // legacy Edge
+
+  &::-webkit-scrollbar {
+    display: none; // Chrome/Safari
+  }
 }
 
 .input:focus {
