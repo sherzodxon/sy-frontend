@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Send } from "lucide-react";
+import { useAutoResizeTextarea } from "@/hooks/useAutoResizeTextarea";
 import styles from "./MessageComposer.module.scss";
 
 type Props = {
@@ -24,6 +25,15 @@ export default function MessageComposer({
   onSend,
   onFocus,
 }: Props) {
+  const textareaRef = useAutoResizeTextarea(value);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      onSend();
+    }
+  };
+
   return (
     <div className={`${styles.bar} ${admin ? styles.admin : styles.sticky}`}>
       <div className={admin ? styles.form : styles.inner}>
@@ -31,12 +41,13 @@ export default function MessageComposer({
           {!admin && <div className={styles.avatar}>{avatarLabel}</div>}
           {!admin && (
             <>
-              <input
+              <textarea
+                ref={textareaRef}
                 className={styles.input}
-                type="text"
+                rows={1}
                 value={value}
                 onChange={event => onChange(event.target.value)}
-                onKeyDown={event => event.key === "Enter" && !event.shiftKey && onSend()}
+                onKeyDown={handleKeyDown}
                 placeholder={placeholder}
               />
               <button className={styles.send} onClick={onSend} disabled={!value.trim() || sending}>
@@ -48,13 +59,14 @@ export default function MessageComposer({
         </div>
         {admin && (
           <>
-            <input
+            <textarea
+              ref={textareaRef}
               className={styles.input}
-              type="text"
+              rows={1}
               value={value}
               onFocus={onFocus}
               onChange={event => onChange(event.target.value)}
-              onKeyDown={event => event.key === "Enter" && !event.shiftKey && onSend()}
+              onKeyDown={handleKeyDown}
               placeholder={placeholder}
             />
             <button className={styles.send} onClick={onSend} disabled={!value.trim() || sending}>

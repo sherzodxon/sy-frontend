@@ -1,4 +1,5 @@
 import { Check, CheckCheck, Pencil, Trash2, X } from "lucide-react";
+import { useAutoResizeTextarea } from "@/hooks/useAutoResizeTextarea";
 import styles from "./MessageBubble.module.scss";
 
 type Props = {
@@ -46,6 +47,8 @@ export default function MessageBubble({
   onStartEdit,
   onDelete,
 }: Props) {
+  const editTextareaRef = useAutoResizeTextarea(editValue);
+
   const bubbleClass = [
     styles.bubble,
     tone === "accent" ? styles.accent : styles.incoming,
@@ -59,13 +62,18 @@ export default function MessageBubble({
       <div className={`${styles.content} ${compact ? styles.compact : ""}`}>
         {isEditing ? (
           <div className={styles.editForm}>
-            <input
+            <textarea
+              ref={editTextareaRef}
               autoFocus
+              rows={1}
               className={styles.editInput}
               value={editValue}
               onChange={event => onEditValueChange?.(event.target.value)}
               onKeyDown={event => {
-                if (event.key === "Enter") onSaveEdit?.();
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  onSaveEdit?.();
+                }
                 if (event.key === "Escape") onCancelEdit?.();
               }}
             />
