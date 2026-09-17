@@ -81,6 +81,12 @@ body{
 @media(max-width:768px){.cursor-dot,.cursor-ring{display:none}}
 @media(prefers-reduced-motion:reduce){.cursor-dot,.cursor-ring{display:none}}
 
+/* Custom cursor aktiv bo'lganda brauzerning o'z kursori (barcha ichki elementlarda
+   ham, pointer/cursor:pointer qo'yilgan joylarda ham) butunlay yashiriladi. */
+body.has-custom-cursor,
+body.has-custom-cursor *{cursor:none!important}
+@media(max-width:768px){body.has-custom-cursor,body.has-custom-cursor *{cursor:auto!important}}
+
 /* ─── Navbar ─── */
 .nav-desktop{display:none;align-items:center;gap:28px}
 .nav-controls{display:none;align-items:center;gap:8px}

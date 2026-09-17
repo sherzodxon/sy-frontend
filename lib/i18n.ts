@@ -1,21 +1,18 @@
 export type Locale = "en" | "uz" | "ru";
 
 export const locales: {
-  code: Locale;label: string;flag: string
+  code: Locale;label: string
 } [] = [{
     code: "en",
-    label: "EN",
-    flag: "🇺🇸"
+    label: "En"
   },
   {
     code: "uz",
-    label: "UZ",
-    flag: "🇺🇿"
+    label: "O'z"
   },
   {
     code: "ru",
-    label: "RU",
-    flag: "🇷🇺"
+    label: "Ру"
   },
 ];
 

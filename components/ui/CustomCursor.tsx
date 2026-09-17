@@ -24,6 +24,10 @@ export default function CustomCursor() {
   useEffect(() => {
     if (isWeakEnvironment()) return;
 
+    // Custom cursor aktiv bo'lganda brauzerning o'z (native) kursorini yashiramiz —
+    // aks holda ikkalasi bir vaqtda ko'rinib, chalkash bo'lib qolardi.
+    document.body.classList.add("has-custom-cursor");
+
     let rafId: number;
     let stillFrames = 0;
 
@@ -80,6 +84,7 @@ export default function CustomCursor() {
     rafId = requestAnimationFrame(animate);
 
     return () => {
+      document.body.classList.remove("has-custom-cursor");
       document.removeEventListener("mousemove", onMove);
       cancelAnimationFrame(rafId);
       // Hover listenerlarini tozalaymiz — memory leak yo'q
