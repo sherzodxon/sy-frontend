@@ -4,6 +4,17 @@ import { useEffect, useRef } from "react";
 const HOVER_SELECTORS =
   "a,button,.card,.social-icon,.skill-badge,.btn-primary,.btn-outline,.tag,.magnetic-wrap";
 
+// Sensorli ekran, harakatni kamaytirish tanlangan yoki zaif qurilma (kam xotira/yadro) —
+// ParticleCanvas'dagi bilan bir xil mezon, ikkalasi ham shu holatlarda o'chirilishi kerak.
+function isWeakEnvironment() {
+  if (window.matchMedia("(pointer: coarse)").matches) return true;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  if (nav.deviceMemory && nav.deviceMemory <= 2) return true;
+  if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) return true;
+  return false;
+}
+
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -11,20 +22,17 @@ export default function CustomCursor() {
   const ring = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Faqat desktop qurilmalarida cursor aktiv bo'lsin
-    if (window.matchMedia("(pointer: coarse)").matches) return;
+    if (isWeakEnvironment()) return;
 
     let rafId: number;
-    let isMoving = false;
     let stillFrames = 0;
 
     const onMove = (e: MouseEvent) => {
       pos.current = { x: e.clientX, y: e.clientY };
-      if (dotRef.current) {
-        dotRef.current.style.left = e.clientX + "px";
-        dotRef.current.style.top = e.clientY + "px";
-      }
-      isMoving = true;
+      // left/top o'rniga CSS custom property + transform — bu faqat compositor
+      // qatlamini yangilaydi, layout'ni qayta hisoblashga majbur qilmaydi.
+      dotRef.current?.style.setProperty("--cx", `${e.clientX}px`);
+      dotRef.current?.style.setProperty("--cy", `${e.clientY}px`);
       stillFrames = 0;
     };
 
@@ -32,13 +40,11 @@ export default function CustomCursor() {
       const dx = pos.current.x - ring.current.x;
       const dy = pos.current.y - ring.current.y;
 
-      // Ring maqsadga yetib olgan bo'lsa — rAF ni to'xtatamiz (CPU tejash)
+      // Ring maqsadga yetib olgan bo'lsa — hisoblashni to'xtatamiz (CPU tejash)
       if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
         stillFrames++;
         if (stillFrames > 10) {
-          // Ring to'liq to'xtadi, keyingi mousemove ga qadar kutamiz
-          isMoving = false;
-          rafId = requestAnimationFrame(animate); // tekshirishni davom ettir (past narx)
+          rafId = requestAnimationFrame(animate);
           return;
         }
       } else {
@@ -48,10 +54,8 @@ export default function CustomCursor() {
       ring.current.x += dx * 0.12;
       ring.current.y += dy * 0.12;
 
-      if (ringRef.current) {
-        ringRef.current.style.left = ring.current.x + "px";
-        ringRef.current.style.top = ring.current.y + "px";
-      }
+      ringRef.current?.style.setProperty("--rx", `${ring.current.x}px`);
+      ringRef.current?.style.setProperty("--ry", `${ring.current.y}px`);
 
       rafId = requestAnimationFrame(animate);
     };

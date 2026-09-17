@@ -52,25 +52,34 @@ body{
 ::-webkit-scrollbar-track{background:var(--bg-secondary)}
 ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
 
-/* ─── Custom Cursor ─── */
+/* ─── Custom Cursor ───
+   Pozitsiya --cx/--cy/--rx/--ry custom property + transform orqali beriladi —
+   left/top'dan farqli o'laroq bu faqat compositor qatlamini yangilaydi,
+   layout'ni qayta hisoblashga (reflow) majbur qilmaydi. transform'ga transition
+   qo'shilmaydi — ring silliqligi JS'dagi lerp orqali allaqachon boshqariladi. */
 .cursor-dot{
-  position:fixed;width:8px;height:8px;
+  position:fixed;top:0;left:0;width:8px;height:8px;
   background:var(--cursor-color);
   border-radius:50%;pointer-events:none;
-  z-index:9999;transform:translate(-50%,-50%);
-  transition:transform 0.1s,width 0.2s,height 0.2s,background 0.2s;
+  z-index:9999;
+  transform:translate3d(calc(var(--cx,-100px) - 50%),calc(var(--cy,-100px) - 50%),0);
+  transition:width 0.2s,height 0.2s,background 0.2s;
+  will-change:transform;
 }
 .cursor-ring{
-  position:fixed;width:36px;height:36px;
+  position:fixed;top:0;left:0;width:36px;height:36px;
   border:1.5px solid var(--cursor-color);
   border-radius:50%;pointer-events:none;
-  z-index:9998;transform:translate(-50%,-50%);
-  transition:transform 0.08s linear,width 0.25s,height 0.25s,border-color 0.25s,opacity 0.25s;
+  z-index:9998;
+  transform:translate3d(calc(var(--rx,-100px) - 50%),calc(var(--ry,-100px) - 50%),0);
+  transition:width 0.25s,height 0.25s,border-color 0.25s,opacity 0.25s;
   opacity:0.6;
+  will-change:transform;
 }
 .cursor-dot.hovered{width:4px;height:4px;background:var(--accent)}
 .cursor-ring.hovered{width:52px;height:52px;opacity:0.3}
 @media(max-width:768px){.cursor-dot,.cursor-ring{display:none}}
+@media(prefers-reduced-motion:reduce){.cursor-dot,.cursor-ring{display:none}}
 
 /* ─── Navbar ─── */
 .nav-desktop{display:none;align-items:center;gap:28px}
@@ -177,6 +186,13 @@ body{
   position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.85;
 }
 @media(prefers-reduced-motion:reduce){#particle-canvas{display:none}}
+
+/* ─── Reduced motion: to'xtovsiz/dekorativ animatsiyalarni o'chirish ─── */
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal,.reveal-left,.reveal-scale,.fade-up{transition:none;animation:none}
+  .float,.spin-slow,.tl-dot.current,.dark .tl-dot.current,.typing-cursor{animation:none}
+}
 
 /* ─── FadeIn utilities ─── */
 .reveal{opacity:0;transform:translateY(28px);transition:opacity 0.65s ease,transform 0.65s ease}

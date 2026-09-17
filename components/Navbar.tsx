@@ -3,11 +3,11 @@ import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon, Monitor, Menu, X, MessageCircle } from "lucide-react";
 import { useLang } from "@/hooks/useLang";
-import { locales, Locale } from "@/lib/i18n";
 import Link from "next/link";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 export default function Navbar() {
-  const { t, locale, setLocale } = useLang();
+  const { t } = useLang();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -73,9 +73,7 @@ export default function Navbar() {
         </nav>
 
         <div className="nav-controls">
-          <select value={locale} onChange={e=>setLocale(e.target.value as Locale)} style={{ background:"var(--bg-card)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:8,padding:"4px 10px",fontSize:"0.75rem",fontFamily:"JetBrains Mono,monospace",cursor:"pointer",outline:"none" }}>
-            {locales.map(l=><option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
-          </select>
+          <LanguageSwitcher />
           <button onClick={cycleTheme} style={{ background:"var(--bg-card)",border:"1px solid var(--border)",color:"var(--text-muted)",borderRadius:8,padding:6,cursor:"pointer",display:"flex",alignItems:"center",lineHeight:0 }}>
             <ThemeIcon/>
           </button>
@@ -95,9 +93,7 @@ export default function Navbar() {
             <a key={l.key} href={l.href} className={`nav-link ${active===l.key?"active":""}`} onClick={()=>setMobileOpen(false)} style={{ display:"block",padding:"4px 0" }}>{l.label}</a>
           ))}
           <div style={{ display:"flex",alignItems:"center",gap:8,paddingTop:4 }}>
-            <select value={locale} onChange={e=>setLocale(e.target.value as Locale)} style={{ background:"var(--bg-secondary)",border:"1px solid var(--border)",color:"var(--text)",borderRadius:8,padding:"4px 10px",fontSize:"0.75rem",fontFamily:"JetBrains Mono,monospace",cursor:"pointer",outline:"none" }}>
-              {locales.map(l=><option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
-            </select>
+            <LanguageSwitcher variant="secondary" />
             <button onClick={cycleTheme} style={{ background:"var(--bg-secondary)",border:"1px solid var(--border)",color:"var(--text-muted)",borderRadius:8,padding:6,cursor:"pointer",display:"flex",alignItems:"center",lineHeight:0 }}>
               <ThemeIcon/>
             </button>

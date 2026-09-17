@@ -98,21 +98,6 @@
   gap: 8px;
 }
 
-.select {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-card);
-  color: var(--text);
-  cursor: pointer;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.75rem;
-  outline: none;
-  padding: 4px 10px;
-}
-
-.mobileMenu .select {
-  background: var(--bg-secondary);
-}
 
 .iconButton {
   gap: 5px;

@@ -29,13 +29,13 @@ import {
 } from "@/components/chat/chatUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { useLang } from "@/hooks/useLang";
-import { Locale, locales } from "@/lib/i18n";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { AdminDirectMessage, chatApi, UserMessage } from "@/services/api";
 import styles from "./ChatPage.module.scss";
 
 export default function ChatPage() {
   const { user, logout, loading } = useAuth();
-  const { t, locale, setLocale } = useLang();
+  const { t } = useLang();
   const { theme, setTheme } = useTheme();
 
   const [userMsgs, setUserMsgs] = useState<UserMessage[]>([]);
@@ -220,17 +220,7 @@ export default function ChatPage() {
 
   const renderControls = (mobile = false) => (
     <>
-      <select
-        className={styles.select}
-        value={locale}
-        onChange={event => setLocale(event.target.value as Locale)}
-      >
-        {locales.map(item => (
-          <option key={item.code} value={item.code}>
-            {item.flag} {item.label}
-          </option>
-        ))}
-      </select>
+      <LanguageSwitcher variant={mobile ? "secondary" : "default"} />
       <button className={styles.iconButton} onClick={cycleTheme}>
         {renderThemeIcon()}
       </button>
