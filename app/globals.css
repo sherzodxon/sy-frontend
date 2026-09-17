@@ -381,13 +381,14 @@ input {
 }
 
 /* ─── Skills section flip cards ─── */
+/* .flip-card-front/.flip-card-back are position:absolute with height:100% of
+   .flip-card-inner, which itself is height:100% of .flip-card. Any height:auto
+   on .flip-card breaks that percentage chain (absolutely positioned children
+   don't contribute to an auto-height parent), collapsing the front/back faces
+   and letting their content overflow the card. Keep an explicit height here too. */
 @media (max-width: 640px) {
   #skills [style*="gridTemplateColumns"] {
     grid-template-columns: 1fr !important;
-  }
-  .flip-card {
-    height: auto !important;
-    min-height: 200px;
   }
 }
 
