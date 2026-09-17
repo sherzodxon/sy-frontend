@@ -1,14 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, Menu, X, MessageCircle } from "lucide-react";
+import { Sun, Moon, Monitor, Menu, X, MessageCircle, Binary } from "lucide-react";
 import { useLang } from "@/hooks/useLang";
+import { useDigitRain } from "@/hooks/useDigitRain";
 import Link from "next/link";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 export default function Navbar() {
   const { t } = useLang();
   const { theme, setTheme } = useTheme();
+  const { enabled: rainEnabled, toggle: toggleRain } = useDigitRain();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -40,6 +42,18 @@ export default function Navbar() {
     const order = ["light","dark","system"];
     setTheme(order[(order.indexOf(theme||"system")+1)%order.length]);
   };
+
+  const rainBtnStyle = (secondary = false): React.CSSProperties => ({
+    background: rainEnabled ? "var(--accent)" : secondary ? "var(--bg-secondary)" : "var(--bg-card)",
+    border: "1px solid var(--border)",
+    color: rainEnabled ? "#fff" : "var(--text-muted)",
+    borderRadius: 8,
+    padding: 6,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    lineHeight: 0,
+  });
 
   const ThemeIcon = () => {
     if (!mounted) return <span style={{ width:15,height:15,display:"inline-block" }}/>;
@@ -77,6 +91,9 @@ export default function Navbar() {
           <button onClick={cycleTheme} style={{ background:"var(--bg-card)",border:"1px solid var(--border)",color:"var(--text-muted)",borderRadius:8,padding:6,cursor:"pointer",display:"flex",alignItems:"center",lineHeight:0 }}>
             <ThemeIcon/>
           </button>
+          <button onClick={toggleRain} title="Raqamlar yomg'iri" aria-label="Raqamlar yomg'iri" aria-pressed={rainEnabled} style={rainBtnStyle()}>
+            <Binary size={15}/>
+          </button>
           <Link href="/chat" style={{ background:"var(--accent)",color:"#fff",borderRadius:8,padding:"5px 14px",fontSize:"0.78rem",fontWeight:600,display:"flex",alignItems:"center",gap:5,textDecoration:"none" }}>
             <MessageCircle size={13}/> {t.chat.chat_btn}
           </Link>
@@ -96,6 +113,9 @@ export default function Navbar() {
             <LanguageSwitcher variant="secondary" />
             <button onClick={cycleTheme} style={{ background:"var(--bg-secondary)",border:"1px solid var(--border)",color:"var(--text-muted)",borderRadius:8,padding:6,cursor:"pointer",display:"flex",alignItems:"center",lineHeight:0 }}>
               <ThemeIcon/>
+            </button>
+            <button onClick={toggleRain} title="Raqamlar yomg'iri" aria-label="Raqamlar yomg'iri" aria-pressed={rainEnabled} style={rainBtnStyle(true)}>
+              <Binary size={15}/>
             </button>
             <Link href="/chat" onClick={()=>setMobileOpen(false)} style={{ background:"var(--accent)",color:"#fff",borderRadius:8,padding:"5px 14px",fontSize:"0.78rem",fontWeight:600,display:"flex",alignItems:"center",gap:5,textDecoration:"none" }}>
               <MessageCircle size={13}/> {t.chat.chat_btn}

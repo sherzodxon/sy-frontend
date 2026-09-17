@@ -78,8 +78,21 @@ body{
 }
 .cursor-dot.hovered{width:4px;height:4px;background:var(--accent)}
 .cursor-ring.hovered{width:52px;height:52px;opacity:0.3}
-@media(max-width:768px){.cursor-dot,.cursor-ring{display:none}}
-@media(prefers-reduced-motion:reduce){.cursor-dot,.cursor-ring{display:none}}
+/* Ring bilan bir xil (kechikkan) pozitsiyani kuzatib boruvchi yumshoq porlash izi */
+.cursor-glow{
+  position:fixed;top:0;left:0;width:220px;height:220px;
+  border-radius:50%;pointer-events:none;
+  z-index:9997;
+  background:radial-gradient(circle,var(--cursor-color) 0%,transparent 70%);
+  filter:blur(30px);
+  opacity:0.18;
+  transform:translate3d(calc(var(--rx,-300px) - 50%),calc(var(--ry,-300px) - 50%),0);
+  transition:opacity 0.3s ease;
+  will-change:transform;
+}
+.cursor-glow.hovered{opacity:0.3}
+@media(max-width:768px){.cursor-dot,.cursor-ring,.cursor-glow{display:none}}
+@media(prefers-reduced-motion:reduce){.cursor-dot,.cursor-ring,.cursor-glow{display:none}}
 
 /* Custom cursor aktiv bo'lganda brauzerning o'z kursori (barcha ichki elementlarda
    ham, pointer/cursor:pointer qo'yilgan joylarda ham) butunlay yashiriladi. */
@@ -192,6 +205,19 @@ body.has-custom-cursor *{cursor:none!important}
   position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.85;
 }
 @media(prefers-reduced-motion:reduce){#particle-canvas{display:none}}
+
+/* ─── Raqamlar yomg'iri (yoqilganda kontent ustidan yarim shaffof qoplaydi) ─── */
+#digit-rain-canvas{
+  position:fixed;inset:0;pointer-events:none;z-index:50;
+}
+@media(prefers-reduced-motion:reduce){#digit-rain-canvas{display:none}}
+
+/* ─── Fon dekorativ shakllari (kod/tex mavzusi) — juda xira, scroll bilan qimirlamaydi ─── */
+.bg-shapes{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;color:var(--accent)}
+.bg-shape{position:absolute;opacity:0.07}
+.bg-shape-circuit{top:8%;right:-2%;width:min(30vw,320px);height:auto}
+.bg-shape-brackets{bottom:6%;left:-3%;width:min(22vw,240px);height:auto}
+@media(max-width:768px){.bg-shapes{display:none}}
 
 /* ─── Reduced motion: to'xtovsiz/dekorativ animatsiyalarni o'chirish ─── */
 @media(prefers-reduced-motion:reduce){

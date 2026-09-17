@@ -18,6 +18,7 @@ function isWeakEnvironment() {
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
   const pos = useRef({ x: 0, y: 0 });
   const ring = useRef({ x: 0, y: 0 });
 
@@ -60,6 +61,10 @@ export default function CustomCursor() {
 
       ringRef.current?.style.setProperty("--rx", `${ring.current.x}px`);
       ringRef.current?.style.setProperty("--ry", `${ring.current.y}px`);
+      // Porlash izi ham ring bilan bir xil (kechikkan) pozitsiyani kuzatadi —
+      // qo'shimcha holat kerak emas, faqat bitta transform o'qish.
+      glowRef.current?.style.setProperty("--rx", `${ring.current.x}px`);
+      glowRef.current?.style.setProperty("--ry", `${ring.current.y}px`);
 
       rafId = requestAnimationFrame(animate);
     };
@@ -67,10 +72,12 @@ export default function CustomCursor() {
     const onEnter = () => {
       dotRef.current?.classList.add("hovered");
       ringRef.current?.classList.add("hovered");
+      glowRef.current?.classList.add("hovered");
     };
     const onLeave = () => {
       dotRef.current?.classList.remove("hovered");
       ringRef.current?.classList.remove("hovered");
+      glowRef.current?.classList.remove("hovered");
     };
 
     // Hover elementlarini yig'amiz — cleanup uchun saqlash
@@ -97,6 +104,7 @@ export default function CustomCursor() {
 
   return (
     <>
+      <div ref={glowRef} className="cursor-glow" />
       <div ref={dotRef} className="cursor-dot" />
       <div ref={ringRef} className="cursor-ring" />
     </>

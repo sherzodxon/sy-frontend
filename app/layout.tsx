@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { LangProvider } from "@/hooks/useLang";
 import { AuthProvider } from "@/hooks/useAuth";
+import { DigitRainProvider } from "@/hooks/useDigitRain";
 
 export const metadata = {
   title: "Sherzodxon",
@@ -38,7 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
           <LangProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <DigitRainProvider>{children}</DigitRainProvider>
+            </AuthProvider>
           </LangProvider>
         </ThemeProvider>
       </body>

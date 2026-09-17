@@ -7,6 +7,8 @@ import Footer from "@/components/Footer";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import CustomCursor from "@/components/ui/CustomCursor";
 import ParticleCanvas from "@/components/ui/ParticleCanvas";
+import BackgroundShapes from "@/components/ui/BackgroundShapes";
+import DigitRain from "@/components/ui/DigitRain";
 import Skills from "@/components/sections/Skills";
 
 export default function Home() {
@@ -14,7 +16,9 @@ export default function Home() {
     <>
       <ScrollProgress />
       <CustomCursor />
+      <BackgroundShapes />
       <ParticleCanvas />
+      <DigitRain />
       <Navbar />
       <main style={{ position: "relative", zIndex: 2 }}>
         <Hero />
