@@ -55,7 +55,7 @@ export default function LanguageSwitcher({ variant = "default" }: Props) {
       </button>
 
       {open && (
-        <ul className={styles.menu} role="listbox">
+        <ul className={`${styles.menu} ${variant === "secondary" ? styles.menuLeft : ""}`} role="listbox">
           {locales.map(item => (
             <li key={item.code}>
               <button

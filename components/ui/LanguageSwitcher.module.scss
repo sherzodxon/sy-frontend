@@ -31,6 +31,7 @@
   top: calc(100% + 6px);
   right: 0;
   z-index: 200;
+  max-width: calc(100vw - 32px);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -44,6 +45,14 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 32px var(--shadow);
+}
+
+// Mobil menyu ichida trigger panelning chap tomonida joylashadi — shu sabab
+// o'ngga tekislangan dropdown chapga (panel chegarasidan tashqariga) chiqib
+// ketardi. Bu variantda chapga tekislab, o'ngga qarab ochiladi.
+.menuLeft {
+  right: auto;
+  left: 0;
 }
 
 .option {
