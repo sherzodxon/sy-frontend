@@ -11,6 +11,7 @@ import GitHubIcon from "../ui/GithubIcon";
 import TelegramIcon from "../ui/TelegramIcon";
 import LinkedInIcon from "../ui/LinkedinIcon";
 import GmailIcon from "../ui/GmailIcon";
+import ChatIcon from "../ui/ChatIcon";
 
 const iconMap: Record<string, React.ReactNode> = {
   Github: <GitHubIcon size={20} />,
@@ -77,7 +78,7 @@ export default function Contact() {
           <FadeIn delay={0.2} direction="scale">
             <div className="card" style={{ borderRadius: 20, padding: "32px 28px", textAlign: "center", minWidth: 200 }}>
               <div style={{ position: "relative", display: "inline-block", marginBottom: 12 }}>
-                <div style={{ fontSize: "2.5rem" }}>💬</div>
+                <div style={{ color: "var(--accent)" }}><ChatIcon size={40} /></div>
                 {unread > 0 && (
                   <span style={{
                     position: "absolute", top: -4, right: -4,
